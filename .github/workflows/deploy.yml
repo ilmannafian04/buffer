@@ -34,8 +34,8 @@ jobs:
       - name: Build and push tags
         uses: docker/build-push-action@v2
         with:
-          context: ./fenn-${{ matrix.app }}
+          context: ./buffer-${{ matrix.app }}
           platforms: ${{ matrix.arch }}
           push: true
           # tags: ilmannafian/fenn:${{ matrix.app }}${{ env.ref }}
-          tags: ilmannafian/fenn:${{ matrix.app }}-0.0.0
+          tags: ilmannafian/buffer:${{ matrix.app }}-0.0.0
