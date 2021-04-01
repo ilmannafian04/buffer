@@ -1,3 +1,7 @@
+extern crate openssl;
+#[macro_use]
+extern crate diesel;
+
 use actix_web::{middleware::Logger, App, HttpServer};
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::PgConnection;

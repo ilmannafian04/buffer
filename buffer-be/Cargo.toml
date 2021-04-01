@@ -13,4 +13,5 @@ diesel = { version = "1.4.6", features = ["postgres", "r2d2", "chrono"] }
 dotenv = "0.15.0"
 env_logger = "0.8.3"
 log = "0.4.14"
+openssl = "0.10.33"
 serde = { version = "1.0.125", features = ["derive"] }

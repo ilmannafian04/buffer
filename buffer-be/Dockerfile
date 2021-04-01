@@ -1,13 +1,11 @@
-FROM rust:1-alpine as builder
+FROM ekidd/rust-musl-builder:stable AS builder
 
-WORKDIR /home
-COPY ./Cargo.toml ./Cargo.lock ./
-COPY ./src ./src
-RUN ["apk", "add", "--no-cache", "musl-dev", "postgresql-dev"]
+ADD --chown=rust:rust . .
 RUN ["cargo", "build", "--release"]
 
 FROM alpine:3
 
-COPY --from=builder /home/target/release/buffer-be /usr/local/bin
+RUN apk --no-cache add ca-certificates
+COPY --from=builder /home/rust/src/target/x86_64-unknown-linux-musl/release/buffer-be /usr/local/bin/
 
-ENTRYPOINT [ "buffer-be" ]
+ENTRYPOINT ["buffer-be"]
