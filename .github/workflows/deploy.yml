@@ -48,7 +48,7 @@ jobs:
           push: true
           cache-from: ilmannafian/buffer:${{ matrix.app }}-latest
           tags: 
-            - ilmannafian/buffer:${{ matrix.app }}-latest
-            - ilmannafian/buffer:${{ matrix.app }}-${{ steps.semver_parser.outputs.major }}
-            - ilmannafian/buffer:${{ matrix.app }}-${{ steps.semver_parser.outputs.major }}.${{ steps.semver_parser.outputs.minor }}
-            - ilmannafian/buffer:${{ matrix.app }}-${{ steps.semver_parser.outputs.major }}.${{ steps.semver_parser.outputs.minor }}.${{ steps.semver_parser.outputs.patch }}
+            - "ilmannafian/buffer:${{ matrix.app }}-latest"
+            - "ilmannafian/buffer:${{ matrix.app }}-${{ steps.semver_parser.outputs.major }}"
+            - "ilmannafian/buffer:${{ matrix.app }}-${{ steps.semver_parser.outputs.major }}.${{ steps.semver_parser.outputs.minor }}"
+            - "ilmannafian/buffer:${{ matrix.app }}-${{ steps.semver_parser.outputs.major }}.${{ steps.semver_parser.outputs.minor }}.${{ steps.semver_parser.outputs.patch }}"
