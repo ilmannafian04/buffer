@@ -2,8 +2,8 @@ name: Publish Docker image
 
 on:
   push:
-    # tags:
-    #   - v*.*.*
+    tags:
+      - v*.*.*
 
 jobs:
   docker-image:
@@ -23,18 +23,32 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-      - name: Add tag to env var with leading v removed
-        run: |
-          ref="${github_ref/refs\/tags\/v/}"
-          echo $ref
-          echo "ref=$ref" >> $GITHUB_ENV
-        env:
-          github_ref: ${{ github.ref }}
+      - name: Parse semver string
+        id: semver_parser 
+        uses: booxmedialtd/ws-action-parse-semver@v1
+        with:
+          # input_string: ${{ github.ref }}
+          input_string: refs/tags/v0.0.0
+          version_extractor_regex: '\/v(.*)$'
+      # - name: Add tag to env var with leading v removed
+      #   run: |
+      #     ref="${github_ref/refs\/tags\/v/}"
+      #     ref="${github_ref/refs\/tags\/v/}"
+      #     echo "major=$ref" >> $GITHUB_ENV
+      #     echo "minor=$ref" >> $GITHUB_ENV
+      #     echo "patch=$ref" >> $GITHUB_ENV
+      #     echo "ref=$ref" >> $GITHUB_ENV
+      #   env:
+      #     github_ref: ${{ github.ref }}
       - name: Build and push tags
         uses: docker/build-push-action@v2
         with:
           context: ./buffer-${{ matrix.app }}
           platforms: linux/amd64,linux/arm64
           push: true
-          # tags: ilmannafian/buffer:${{ matrix.app }}${{ env.ref }}
-          tags: ilmannafian/buffer:${{ matrix.app }}-0.0.0
+          cache-from: ilmannafian/buffer:${{ matrix.app }}-latest
+          tags: 
+            - ilmannafian/buffer:${{ matrix.app }}-latest
+            - ilmannafian/buffer:${{ matrix.app }}-${{ steps.semver_parser.outputs.major }}
+            - ilmannafian/buffer:${{ matrix.app }}-${{ steps.semver_parser.outputs.major }}.${{ steps.semver_parser.outputs.minor }}
+            - ilmannafian/buffer:${{ matrix.app }}-${{ steps.semver_parser.outputs.major }}.${{ steps.semver_parser.outputs.minor }}.${{ steps.semver_parser.outputs.patch }}
