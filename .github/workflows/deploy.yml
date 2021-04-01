@@ -12,7 +12,6 @@ jobs:
     strategy:
       matrix:
         app: [fe, be]
-        arch: [linux/amd64,linux/arm64]
     steps:
       - uses: actions/checkout@v2
       - name: Set up QEMU
@@ -35,7 +34,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: ./buffer-${{ matrix.app }}
-          platforms: ${{ matrix.arch }}
+          platforms: linux/amd64,linux/arm64
           push: true
-          # tags: ilmannafian/fenn:${{ matrix.app }}${{ env.ref }}
+          # tags: ilmannafian/buffer:${{ matrix.app }}${{ env.ref }}
           tags: ilmannafian/buffer:${{ matrix.app }}-0.0.0
