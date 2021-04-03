@@ -1,9 +1,12 @@
 use std::env;
 
+#[derive(Clone)]
 pub struct Config {
     pub host: String,
     pub port: u16,
     pub database_url: String,
+    pub redis_url: String,
+    pub secret_key: Vec<u8>,
 }
 
 impl Config {
@@ -14,10 +17,22 @@ impl Config {
             .parse::<u16>()
             .expect("Config: PORT is not an integer");
         let database_url = env::var("DATABASE_URL").expect("Config: DATABASE_URL not set");
+        let redis_url = env::var("REDIS_URL").expect("Config: REDIS_URL not set");
+        let secret_key = env::var("SECRET_KEY")
+            .expect("Config: SECRET_KEY not set")
+            .chars()
+            .map(|c| {
+                c.to_string()
+                    .parse::<u8>()
+                    .expect("Config: SECRET_KEY is not an integer")
+            })
+            .collect();
         Config {
             host,
             port,
             database_url,
+            redis_url,
+            secret_key,
         }
     }
 }
