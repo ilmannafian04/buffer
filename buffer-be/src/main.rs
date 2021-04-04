@@ -12,6 +12,7 @@ use log::info;
 mod config;
 mod controllers;
 mod middleware;
+mod models;
 mod routes;
 mod schema;
 
