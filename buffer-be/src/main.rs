@@ -11,6 +11,8 @@ use log::info;
 
 mod config;
 mod controllers;
+mod dto;
+mod error;
 mod middleware;
 mod models;
 mod routes;

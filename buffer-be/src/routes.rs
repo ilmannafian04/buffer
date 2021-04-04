@@ -9,5 +9,9 @@ pub fn configuration(cfg: &mut web::ServiceConfig) {
             .route("/ping", web::get().to(c::ping))
             .wrap(HttpAuthentication::bearer(auth_validator)),
     )
-    .service(web::scope("/api").route("/ping", web::get().to(c::ping)));
+    .service(
+        web::scope("/api")
+            .route("/ping", web::get().to(c::ping))
+            .route("/signup", web::post().to(c::signup)),
+    );
 }
