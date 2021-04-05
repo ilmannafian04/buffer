@@ -5,8 +5,9 @@ use diesel::{
 };
 use validator::Validate;
 
+use crate::dto::SimpleError;
+use crate::error::DatabaseError;
 use crate::models::{NewUser, UniqueViolationKind, User};
-use crate::{dto::SimpleError, error::DatabaseError};
 
 type DbPool = Pool<ConnectionManager<PgConnection>>;
 
