@@ -5,7 +5,12 @@ use rand::Rng;
 use serde::Deserialize;
 use validator::Validate;
 
-use crate::schema::users;
+use crate::schema::users::{self, dsl::users as all_users, dsl::*};
+
+pub enum UniqueViolationKind {
+    Email,
+    Username,
+}
 
 #[derive(Debug, Queryable)]
 pub struct User {
@@ -15,6 +20,30 @@ pub struct User {
     pub username: String,
     pub display_name: String,
     pub created_at: NaiveDateTime,
+}
+
+impl User {
+    pub fn check_unique_integrity(
+        conn: &PgConnection,
+        uname: &String,
+        mail: &String,
+    ) -> Result<(), UniqueViolationKind> {
+        if let Ok(_) = Self::find_by_email(conn, mail) {
+            Err(UniqueViolationKind::Email)
+        } else if let Ok(_) = Self::find_by_username(conn, uname) {
+            Err(UniqueViolationKind::Username)
+        } else {
+            Ok(())
+        }
+    }
+
+    pub fn find_by_email(conn: &PgConnection, mail: &String) -> QueryResult<User> {
+        all_users.filter(email.eq(mail)).first(conn)
+    }
+
+    pub fn find_by_username(conn: &PgConnection, uname: &String) -> QueryResult<User> {
+        all_users.filter(username.eq(uname)).first(conn)
+    }
 }
 
 #[derive(Debug, Deserialize, Insertable, Validate)]
