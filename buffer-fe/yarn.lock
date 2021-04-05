@@ -23,6 +23,11 @@
     chalk "^2.0.0"
     js-tokens "^4.0.0"
 
+"@popperjs/core@^2.6.0":
+  version "2.9.2"
+  resolved "https://registry.yarnpkg.com/@popperjs/core/-/core-2.9.2.tgz#adea7b6953cbb34651766b0548468e743c6a2353"
+  integrity sha512-VZMYa7+fXHdwIq1TDhSXoVmSPEGM/aa+6Aiq3nVVJ9bXr24zScr+NlKFKC3iPljA7ho/GAZr+d2jOf5GIRC30Q==
+
 "@rollup/pluginutils@^4.1.0":
   version "4.1.0"
   resolved "https://registry.yarnpkg.com/@rollup/pluginutils/-/pluginutils-4.1.0.tgz#0dcc61c780e39257554feb7f77207dceca13c838"
@@ -473,6 +478,11 @@ listr2@^3.2.2:
     through "^2.3.8"
     wrap-ansi "^7.0.0"
 
+lodash-es@^4.17.21:
+  version "4.17.21"
+  resolved "https://registry.yarnpkg.com/lodash-es/-/lodash-es-4.17.21.tgz#43e626c46e6591b7750beb2b50117390c609e3ee"
+  integrity sha512-mKnC+QJ9pWVzv+C4/U3rRsHapFfHvQFoFB92e52xeyGMcX6/OlIl78je1u8vePzYZSkkogMPJ2yjxxsb89cxyw==
+
 log-symbols@^4.0.0:
   version "4.1.0"
   resolved "https://registry.yarnpkg.com/log-symbols/-/log-symbols-4.1.0.tgz#3fbdbb95b4683ac9fc785111e792e558d4abd503"
@@ -798,6 +808,14 @@ svelte@^3.35.0:
   version "3.36.0"
   resolved "https://registry.yarnpkg.com/svelte/-/svelte-3.36.0.tgz#3fc4c6fc7a04c3d4249b4fcccae28fc14f442f64"
   integrity sha512-LSmdCYoAS6kzLff9nejB5KK5FBJaqyiivs7hPl0OJZ+OxiggI8lMAhvo5W3y8vSP0IWS5++Yb5EbKuQdzOSIoA==
+
+sveltestrap@5.0.0-beta.3:
+  version "5.0.0-beta.3"
+  resolved "https://registry.yarnpkg.com/sveltestrap/-/sveltestrap-5.0.0-beta.3.tgz#1aa0fb8fbb32c824b3a57704aa667b0ccd9f4a86"
+  integrity sha512-p+H+FWrsw7aI+MRF1XYE6lgq/OpUICMQ3oNNFBoNA3DJD2idEA0UPWl/cBro2W3AyAGr8B15GqlFXFs4rac1OQ==
+  dependencies:
+    "@popperjs/core" "^2.6.0"
+    lodash-es "^4.17.21"
 
 through@^2.3.8:
   version "2.3.8"
