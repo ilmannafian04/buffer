@@ -1,16 +1,20 @@
 <script lang="ts">
-  // noinspection TypeScriptCheckImport
   import { Router, Route } from 'svelte-routing';
-
   import Signup from './lib/auth/Signup.svelte';
   import Signin from './lib/auth/Signin.svelte';
   import Home from './lib/Home.svelte';
 </script>
 
 <Router url={''}>
-  <Route path="/signup" component={Signup} />
-  <Route path="/signin" component={Signin} />
-  <Route path="/" component={Home} />
+  <Route path="/signup">
+    <Signup />
+  </Route>
+  <Route path="/signin">
+    <Signin />
+  </Route>
+  <Route path="/">
+    <Home />
+  </Route>
 </Router>
 
 <svelte:head>

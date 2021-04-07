@@ -1,5 +1,6 @@
 <script lang="ts">
   import axios from 'axios';
+  import { navigate } from 'svelte-routing';
 
   import type { SignUpFormData } from '../../types/form';
 
@@ -16,8 +17,8 @@
     isSubmitting = true;
     axios
       .post('/api/signup', formData)
-      .then((value) => {
-        console.log(value);
+      .then(() => {
+        navigate('/signin');
         formData = defaultData;
       })
       .catch((err) => console.error(err))
