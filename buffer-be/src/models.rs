@@ -2,7 +2,7 @@ use argon2::hash_encoded;
 use chrono::NaiveDateTime;
 use diesel::{prelude::*, PgConnection};
 use rand::Rng;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use validator::Validate;
 
 use crate::schema::users::{self, dsl::users as all_users, dsl::*};
@@ -12,13 +12,17 @@ pub enum UniqueViolationKind {
     Username,
 }
 
-#[derive(Debug, Queryable)]
+#[derive(Debug, Queryable, Serialize)]
 pub struct User {
+    #[serde(skip_serializing)]
     pub id: i32,
     pub email: String,
     pub username: String,
+    #[serde(skip_serializing)]
     pub password: String,
+    #[serde(rename = "displayName")]
     pub display_name: String,
+    #[serde(skip_serializing)]
     pub created_at: NaiveDateTime,
 }
 

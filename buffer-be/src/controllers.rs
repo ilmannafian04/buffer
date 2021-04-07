@@ -1,4 +1,4 @@
-use actix_web::{web, HttpResponse, Responder, ResponseError};
+use actix_web::{web, HttpRequest, HttpResponse, Responder, ResponseError};
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::PgConnection;
 use validator::Validate;
@@ -72,4 +72,8 @@ pub async fn singin(
         Ok(jwt) => HttpResponse::Ok().json(user_dto::JWTResponse { jwt }),
         Err(_) => HttpResponse::Unauthorized().finish(),
     }
+}
+
+pub async fn user_info(request: HttpRequest) -> HttpResponse {
+    HttpResponse::Ok().json(request.head().extensions().get::<User>().unwrap())
 }
