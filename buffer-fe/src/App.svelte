@@ -6,7 +6,12 @@
   import Signup from './lib/auth/Signup.svelte';
   import Signin from './lib/auth/Signin.svelte';
   import Home from './lib/Home.svelte';
-  import { userState } from './store/auth';
+  import { DEFAULT_STATE, userState } from './store/auth';
+
+  const logoutHandler = () => {
+    localStorage.clear();
+    userState.set(DEFAULT_STATE);
+  };
 
   onMount(() => {
     let jwt = localStorage.getItem('jwt');
@@ -22,6 +27,9 @@
   });
 </script>
 
+{#if $userState.signedIn}
+  <button on:click={logoutHandler}>Logout</button>
+{/if}
 <Router url={''}>
   <Route path="/signup">
     <Signup />
