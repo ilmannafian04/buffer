@@ -1,7 +1,8 @@
 <script lang="ts">
-  import axios from 'axios';
+  import axios, { AxiosResponse } from 'axios';
 
-  import type { SignInFormData } from 'src/types/form';
+  import type { SignInResponse } from '../../types/dto';
+  import type { SignInFormData } from '../../types/form';
 
   let isSubmitting = false;
   let initialData: SignInFormData = {
@@ -13,13 +14,13 @@
   const submitHandler = () => {
     axios
       .post('/api/signin', formData)
-      .then((value) => {
-        console.log(value.data);
+      .then((value: AxiosResponse<SignInResponse>) => {
+        formData = initialData;
+        console.log(value.data.jwt);
       })
-      .catch((err) => console.error(err));
+      .catch((err) => console.error(err))
+      .finally(() => (isSubmitting = false));
   };
-
-  $: console.log(formData);
 </script>
 
 <h1>Signin</h1>
