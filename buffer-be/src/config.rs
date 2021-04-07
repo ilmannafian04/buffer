@@ -1,11 +1,14 @@
 use std::env;
+use validator::Validate;
 
-#[derive(Clone)]
+#[derive(Clone, Validate)]
 pub struct Config {
     pub host: String,
     pub port: u16,
+    #[validate(url)]
     pub database_url: String,
     pub redis_url: String,
+    #[validate(length(min = 32))]
     pub secret_key: String,
 }
 

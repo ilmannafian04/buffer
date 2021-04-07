@@ -8,6 +8,7 @@ use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::PgConnection;
 use dotenv::dotenv;
 use log::info;
+use validator::Validate;
 
 mod config;
 mod controllers;
@@ -27,6 +28,9 @@ async fn main() -> std::io::Result<()> {
 
     info!("Reading config");
     let config = config::Config::new();
+    if let Err(e) = config.validate() {
+        panic!("{}", e);
+    };
 
     info!("Connecting to database");
     let db_manager = ConnectionManager::<PgConnection>::new(&config.database_url);
