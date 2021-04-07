@@ -1,13 +1,8 @@
-use actix_web::{
-    dev::ServiceRequest,
-    error::{ErrorInternalServerError, ErrorNotFound, ErrorUnauthorized},
-    web, Error, HttpMessage,
-};
+use actix_web::error::{ErrorInternalServerError, ErrorNotFound, ErrorUnauthorized};
+use actix_web::{dev::ServiceRequest, web, Error, HttpMessage};
 use actix_web_httpauth::extractors::bearer::BearerAuth;
-use diesel::{
-    r2d2::{ConnectionManager, Pool},
-    PgConnection,
-};
+use diesel::r2d2::{ConnectionManager, Pool};
+use diesel::PgConnection;
 use jsonwebtoken::{DecodingKey, Validation};
 
 use crate::{config::Config, models::User, service::Claims};
