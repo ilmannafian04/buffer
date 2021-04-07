@@ -1,4 +1,5 @@
 <script lang="ts">
+  // noinspection TypeScriptCheckImport
   import { Router, Route } from 'svelte-routing';
 
   import Signup from './lib/auth/Signup.svelte';
