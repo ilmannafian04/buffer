@@ -3,12 +3,10 @@ use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::PgConnection;
 use validator::Validate;
 
+use crate::config::Config;
+use crate::dtos::{user_dto, SimpleError};
 use crate::error::DatabaseError;
 use crate::models::{NewUser, UniqueViolationKind, User};
-use crate::{
-    config::Config,
-    dtos::{user_dto, SimpleError},
-};
 
 type DbPool = Pool<ConnectionManager<PgConnection>>;
 

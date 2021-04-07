@@ -5,12 +5,12 @@ use serde::{Deserialize, Serialize};
 use crate::models::User;
 
 #[derive(Deserialize, Serialize)]
-struct Claims {
-    sub: String,
+pub struct Claims {
+    pub sub: String,
     #[serde(with = "claim_serde")]
-    iat: DateTime<Utc>,
+    pub iat: DateTime<Utc>,
     #[serde(with = "claim_serde")]
-    exp: DateTime<Utc>,
+    pub exp: DateTime<Utc>,
 }
 
 impl Claims {

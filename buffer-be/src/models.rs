@@ -37,6 +37,10 @@ impl User {
         }
     }
 
+    pub fn find_by_id(conn: &PgConnection, user_id: i32) -> QueryResult<User> {
+        all_users.filter(id.eq(user_id)).first(conn)
+    }
+
     pub fn find_by_email(conn: &PgConnection, mail: &String) -> QueryResult<User> {
         all_users.filter(email.eq(mail)).first(conn)
     }
