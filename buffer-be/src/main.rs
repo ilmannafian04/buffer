@@ -11,12 +11,13 @@ use log::info;
 
 mod config;
 mod controllers;
-mod dto;
+mod dtos;
 mod error;
 mod middleware;
 mod models;
 mod routes;
 mod schema;
+mod service;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

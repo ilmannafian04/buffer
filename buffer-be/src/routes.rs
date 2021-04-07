@@ -12,6 +12,7 @@ pub fn configuration(cfg: &mut web::ServiceConfig) {
     .service(
         web::scope("/api")
             .route("/ping", web::get().to(c::ping))
-            .route("/signup", web::post().to(c::signup)),
+            .route("/signup", web::post().to(c::signup))
+            .route("/signin", web::post().to(c::singin)),
     );
 }
