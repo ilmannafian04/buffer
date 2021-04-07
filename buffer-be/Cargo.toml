@@ -7,11 +7,19 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+actix-redis = "0.9.2"
+actix-session = "0.4.1"
 actix-web = "3.3.2"
+actix-web-httpauth = "0.5.1"
 chrono = { version = "0.4.19", default-features = false, features = ["clock", "serde", "std"] }
+derive_more = { version = "0.99.13", default-features = false, features = ["display"] }
 diesel = { version = "1.4.6", features = ["postgres", "r2d2", "chrono"] }
 dotenv = "0.15.0"
 env_logger = "0.8.3"
+jsonwebtoken = "7.2.0"
 log = "0.4.14"
 openssl = "0.10.33"
+rand = "0.8.3"
+rust-argon2 = "0.8.3"
 serde = { version = "1.0.125", features = ["derive"] }
+validator = { version = "0.13.0", features = ["derive"] }

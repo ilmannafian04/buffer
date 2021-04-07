@@ -1,64 +1,47 @@
 <script lang="ts">
-  import logo from './assets/svelte.png';
-  import Counter from './lib/Counter.svelte';
+  import { onMount } from 'svelte';
+  import { Router, Route } from 'svelte-routing';
+
+  import { getAccount } from './api/user';
+  import Signup from './lib/auth/Signup.svelte';
+  import Signin from './lib/auth/Signin.svelte';
+  import Home from './lib/Home.svelte';
+  import { DEFAULT_STATE, userState } from './store/auth';
+
+  const logoutHandler = () => {
+    localStorage.clear();
+    userState.set(DEFAULT_STATE);
+  };
+
+  onMount(() => {
+    let jwt = localStorage.getItem('jwt');
+    if (jwt) {
+      getAccount()
+        .then((value) => {
+          userState.set({ jwt, user: value.data, signedIn: true });
+        })
+        .catch(() => {
+          localStorage.removeItem('jwt');
+        });
+    }
+  });
 </script>
 
-<main>
-  <img src={logo} alt="Svelte Logo" />
-  <h1>Hello Typescript!</h1>
+{#if $userState.signedIn}
+  <button on:click={logoutHandler}>Logout</button>
+{/if}
+<Router url={''}>
+  <Route path="/signup">
+    <Signup />
+  </Route>
+  <Route path="/signin">
+    <Signin />
+  </Route>
+  <Route path="/">
+    <Home />
+  </Route>
+</Router>
 
-  <Counter />
-
-  <p>
-    Visit <a href="https://svelte.dev">svelte.dev</a> to learn how to build Svelte apps.
-  </p>
-
-  <p>
-    Check out <a href="https://github.com/sveltejs/kit#readme">SvelteKit</a> for the officially supported framework, also
-    powered by Vite!
-  </p>
-</main>
-
-<style>
-  :root {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans',
-      'Helvetica Neue', sans-serif;
-  }
-
-  main {
-    text-align: center;
-    padding: 1em;
-    margin: 0 auto;
-  }
-
-  img {
-    height: 16rem;
-    width: 16rem;
-  }
-
-  h1 {
-    color: #ff3e00;
-    text-transform: uppercase;
-    font-size: 4rem;
-    font-weight: 100;
-    line-height: 1.1;
-    margin: 2rem auto;
-    max-width: 14rem;
-  }
-
-  p {
-    max-width: 14rem;
-    margin: 1rem auto;
-    line-height: 1.35;
-  }
-
-  @media (min-width: 480px) {
-    h1 {
-      max-width: none;
-    }
-
-    p {
-      max-width: none;
-    }
-  }
-</style>
+<svelte:head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css" />
+</svelte:head>
