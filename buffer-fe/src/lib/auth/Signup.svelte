@@ -1,7 +1,7 @@
 <script lang="ts">
   import axios from 'axios';
 
-  import type { SignUpFormData } from '../../types/SignUp';
+  import type { SignUpFormData } from '../../types/form';
 
   let isSubmitting = false;
   let defaultData: SignUpFormData = {

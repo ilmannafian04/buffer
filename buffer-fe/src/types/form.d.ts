@@ -4,3 +4,8 @@ export type SignUpFormData = {
   email: string;
   displayName: string;
 }
+
+export type SignInFormData = {
+  username: string;
+  password: string;
+}
