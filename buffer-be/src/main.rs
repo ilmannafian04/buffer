@@ -41,9 +41,10 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .configure(routes::configuration)
             .data(db_pool.clone())
+            .data(config_clone.clone())
             .wrap(RedisSession::new(
                 &config_clone.redis_url,
-                &config_clone.secret_key,
+                &config_clone.secret_key.as_bytes(),
             ))
             .wrap(Logger::default())
     })

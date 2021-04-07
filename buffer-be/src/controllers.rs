@@ -3,9 +3,12 @@ use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::PgConnection;
 use validator::Validate;
 
-use crate::dtos::{user_dto, SimpleError};
 use crate::error::DatabaseError;
 use crate::models::{NewUser, UniqueViolationKind, User};
+use crate::{
+    config::Config,
+    dtos::{user_dto, SimpleError},
+};
 
 type DbPool = Pool<ConnectionManager<PgConnection>>;
 
@@ -54,6 +57,7 @@ pub async fn signup(mut new_user: web::Json<NewUser>, pool: web::Data<DbPool>) -
 pub async fn singin(
     pool: web::Data<DbPool>,
     credential: web::Json<user_dto::SignInDTO>,
+    config: web::Data<Config>,
 ) -> HttpResponse {
     let user = match pool.get() {
         Ok(conn) => {
@@ -66,7 +70,7 @@ pub async fn singin(
         }
         Err(_) => return DatabaseError::PoolLockError.error_response(),
     };
-    match user.authennticate(&credential.password) {
+    match user.authennticate(&credential.password, &config.secret_key) {
         Ok(jwt) => HttpResponse::Ok().json(user_dto::JWTResponse { jwt }),
         Err(_) => HttpResponse::Unauthorized().finish(),
     }

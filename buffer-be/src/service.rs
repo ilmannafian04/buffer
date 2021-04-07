@@ -58,13 +58,13 @@ mod claim_serde {
 }
 
 impl User {
-    pub fn authennticate(self, password: &String) -> Result<String, ()> {
+    pub fn authennticate(self, password: &String, secret_key: &String) -> Result<String, ()> {
         match argon2::verify_encoded(&self.password, &password.as_bytes()) {
             Ok(is_valid) => {
                 if is_valid {
                     Ok(
                         Claims::new(self.id, Utc::now(), Utc::now() + chrono::Duration::weeks(4))
-                            .into_jwt_string(&"test_key".to_owned()),
+                            .into_jwt_string(secret_key),
                     )
                 } else {
                     Err(())
