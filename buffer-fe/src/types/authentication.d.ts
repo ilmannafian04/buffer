@@ -5,6 +5,7 @@ export type User = {
 };
 
 export type UserState = {
+  jwt: string;
   signedIn: boolean;
   user: User | null;
 };

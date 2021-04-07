@@ -1,6 +1,8 @@
 <script lang="ts">
   import axios, { AxiosResponse } from 'axios';
 
+  import { userState } from '../../store/auth';
+  import type { User } from '../../types/authentication';
   import type { SignInResponse } from '../../types/dto';
   import type { SignInFormData } from '../../types/form';
 
@@ -16,7 +18,26 @@
       .post('/api/signin', formData)
       .then((value: AxiosResponse<SignInResponse>) => {
         formData = initialData;
-        console.log(value.data.jwt);
+        userState.update((prev) => {
+          return {
+            ...prev,
+            jwt: value.data.jwt,
+          };
+        });
+        return axios.get<User>('/api/auth/account', {
+          headers: {
+            Authorization: `Bearer ${value.data.jwt}`,
+          },
+        });
+      })
+      .then((value) => {
+        userState.update((prev) => {
+          return {
+            ...prev,
+            signedIn: true,
+            user: value.data,
+          };
+        });
       })
       .catch((err) => console.error(err))
       .finally(() => (isSubmitting = false));
