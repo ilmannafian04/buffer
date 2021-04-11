@@ -1,4 +1,4 @@
-import { DEFAULT_STATE, userState } from '../store/auth';
+import { DEFAULT_STATE, userState } from '../store/authStore';
 
 export const logout = () => {
   localStorage.removeItem('jwt');

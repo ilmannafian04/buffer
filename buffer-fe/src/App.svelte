@@ -4,11 +4,11 @@
   import '@fortawesome/fontawesome-free/css/all.css';
   import 'bulma/css/bulma.css';
 
-  import { getAccount } from './api/user';
+  import { getAccount } from './api/userApi';
   import Signup from './lib/auth/Signup.svelte';
   import Signin from './lib/auth/Signin.svelte';
   import Home from './lib/Home.svelte';
-  import { userState } from './store/auth';
+  import { userState } from './store/authStore';
   import Header from './lib/components/Header.svelte';
 
   onMount(() => {

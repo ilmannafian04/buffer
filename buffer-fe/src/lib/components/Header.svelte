@@ -2,7 +2,7 @@
   // noinspection TypeScriptCheckImport
   import { Icon } from 'svelma';
   import { link } from 'svelte-routing';
-  import { userState } from '../../store/auth';
+  import { userState } from '../../store/authStore';
   import { logout } from '../../util/authUtil';
 
   let menuIsOpen = false;
