@@ -1,8 +1,8 @@
 <script lang="ts">
   import axios, { AxiosResponse } from 'axios';
 
-  import { getAccount } from '../../api/user';
-  import { userState } from '../../store/auth';
+  import { getAccount } from '../../api/userApi';
+  import { userState } from '../../store/authStore';
   import type { SignInResponse } from '../../types/dto';
   import type { SignInFormData } from '../../types/form';
 
