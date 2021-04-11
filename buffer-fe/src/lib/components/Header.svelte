@@ -1,30 +1,52 @@
 <script lang="ts">
-  import { Link, navigate } from 'svelte-routing';
+  import { link } from 'svelte-routing';
 
+  let burger;
+  let burgerMenu;
+  let menuIsOpen = false;
+  const openMenu = () => (menuIsOpen = true);
+  const closeMenu = () => (menuIsOpen = false);
   const navs: { name: string; path: string }[] = [
     {
       name: 'Home',
       path: '/',
     },
-    {
-      name: 'Sign In',
-      path: '/signin',
-    },
-    {
-      name: 'Sign Up',
-      path: '/signup',
-    },
   ];
-
-  const changePage = (path: string) => {
-    navigate(path);
-  };
 </script>
 
-<ul>
-  {#each navs as nav (nav.path)}
-    <li>
-      <a on:click|preventDefault={() => changePage(nav.path)} href="/">{nav.name}</a>
-    </li>
-  {/each}
-</ul>
+<nav class="navbar" role="navigation">
+  <div class="navbar-brand">
+    <a class="navbar-item" href="/" use:link>🐺</a>
+    <a
+      role="button"
+      class={menuIsOpen ? 'navbar-burger is-active' : 'navbar-burger'}
+      aria-label="menu"
+      aria-expanded="false"
+      on:click={openMenu}
+      bind:this={burger}
+    >
+      {#each { length: 3 } as _, i (i)}
+        <!-- prettier-ignore -->
+        <span aria-hidden="true"></span>
+      {/each}
+    </a>
+  </div>
+  <div class={menuIsOpen ? 'navbar-menu is-active' : 'navbar-menu'} bind:this={burgerMenu}>
+    <div class="navbar-start">
+      {#each navs as navLink (navLink.path)}
+        <a class="navbar-item" on:click={closeMenu} use:link href={navLink.path}>{navLink.name}</a>
+      {/each}
+    </div>
+
+    <div class="navbar-end">
+      <div class="navbar-item">
+        <div class="buttons">
+          <a class="button is-primary" href="/signup" on:click={closeMenu} use:link>
+            <strong>Sign up</strong>
+          </a>
+          <a class="button is-light" href="/signin" on:click={closeMenu} use:link>Sign in</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
