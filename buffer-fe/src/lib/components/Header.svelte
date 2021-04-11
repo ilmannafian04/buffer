@@ -1,10 +1,8 @@
 <script lang="ts">
   import { link } from 'svelte-routing';
 
-  let burger;
-  let burgerMenu;
   let menuIsOpen = false;
-  const openMenu = () => (menuIsOpen = true);
+  const toggleMenu = () => (menuIsOpen = !menuIsOpen);
   const closeMenu = () => (menuIsOpen = false);
   const navs: { name: string; path: string }[] = [
     {
@@ -22,8 +20,7 @@
       class={menuIsOpen ? 'navbar-burger is-active' : 'navbar-burger'}
       aria-label="menu"
       aria-expanded="false"
-      on:click={openMenu}
-      bind:this={burger}
+      on:click={toggleMenu}
     >
       {#each { length: 3 } as _, i (i)}
         <!-- prettier-ignore -->
@@ -31,7 +28,7 @@
       {/each}
     </a>
   </div>
-  <div class={menuIsOpen ? 'navbar-menu is-active' : 'navbar-menu'} bind:this={burgerMenu}>
+  <div class={menuIsOpen ? 'navbar-menu is-active' : 'navbar-menu'}>
     <div class="navbar-start">
       {#each navs as navLink (navLink.path)}
         <a class="navbar-item" on:click={closeMenu} use:link href={navLink.path}>{navLink.name}</a>
