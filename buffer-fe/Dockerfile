@@ -1,8 +1,7 @@
-FROM node:14-alpine as builder
+FROM node:14 as builder
 
 WORKDIR /home
 COPY . .
-RUN ["apk", "add", "python", "make", "g++"]
 RUN ["yarn", "install", "--frozen-lockfile"]
 RUN ["yarn", "build"]
 
