@@ -1,9 +1,20 @@
 <script lang="ts">
+  // noinspection TypeScriptCheckImport
+  import { Icon } from 'svelma';
   import { link } from 'svelte-routing';
+  import { userState } from '../../store/auth';
+  import { logout } from '../../util/authUtil';
 
   let menuIsOpen = false;
+  let accountIsOpen = false;
   const toggleMenu = () => (menuIsOpen = !menuIsOpen);
   const closeMenu = () => (menuIsOpen = false);
+  const toggleAccount = () => (accountIsOpen = !accountIsOpen);
+  const logoutHandler = () => {
+    logout();
+    closeMenu();
+    accountIsOpen = false;
+  };
   const navs: { name: string; path: string }[] = [
     {
       name: 'Home',
@@ -24,7 +35,7 @@
     >
       {#each { length: 3 } as _, i (i)}
         <!-- prettier-ignore -->
-        <span aria-hidden="true"></span>
+        <span aria-hidden='true'></span>
       {/each}
     </a>
   </div>
@@ -36,14 +47,27 @@
     </div>
 
     <div class="navbar-end">
-      <div class="navbar-item">
-        <div class="buttons">
-          <a class="button is-primary" href="/signup" on:click={closeMenu} use:link>
-            <strong>Sign up</strong>
+      {#if $userState.signedIn}
+        <div class={`navbar-item has-dropdown ${accountIsOpen ? 'is-active' : ''}`} on:click={toggleAccount}>
+          <a class="navbar-link">
+            <Icon pack="fas" icon="user-circle" size="is-medium" />
           </a>
-          <a class="button is-light" href="/signin" on:click={closeMenu} use:link>Sign in</a>
+          <div class="navbar-dropdown is-right">
+            <a class="navbar-item">{$userState.user.displayName}</a>
+            <hr class="navbar-divider" />
+            <a class="navbar-item" on:click|preventDefault={logoutHandler}>Logout</a>
+          </div>
         </div>
-      </div>
+      {:else}
+        <div class="navbar-item">
+          <div class="buttons">
+            <a class="button is-primary" href="/signup" on:click={closeMenu} use:link>
+              <strong>Sign up</strong>
+            </a>
+            <a class="button is-light" href="/signin" on:click={closeMenu} use:link>Sign in</a>
+          </div>
+        </div>
+      {/if}
     </div>
   </div>
 </nav>
