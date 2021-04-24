@@ -12,7 +12,7 @@ pub enum UniqueViolationKind {
     Username,
 }
 
-#[derive(Debug, Queryable, Serialize)]
+#[derive(Debug, Identifiable, Queryable, Serialize)]
 pub struct User {
     #[serde(skip_serializing)]
     pub id: i32,

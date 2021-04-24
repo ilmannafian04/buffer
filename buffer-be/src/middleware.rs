@@ -5,7 +5,7 @@ use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::PgConnection;
 use jsonwebtoken::{DecodingKey, Validation};
 
-use crate::{config::Config, models::User, service::Claims};
+use crate::{config::Config, models::user::User, service::Claims};
 
 pub async fn auth_validator(
     request: ServiceRequest,

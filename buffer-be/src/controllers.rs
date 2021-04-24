@@ -6,7 +6,7 @@ use validator::Validate;
 use crate::config::Config;
 use crate::dtos::{user_dto, SimpleError};
 use crate::error::DatabaseError;
-use crate::models::{NewUser, UniqueViolationKind, User};
+use crate::models::user::{NewUser, UniqueViolationKind, User};
 
 type DbPool = Pool<ConnectionManager<PgConnection>>;
 
