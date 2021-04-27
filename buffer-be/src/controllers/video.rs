@@ -5,6 +5,7 @@ use actix_web::{web, HttpRequest, HttpResponse, ResponseError};
 use futures::TryStreamExt;
 
 use crate::{
+    config::Config,
     dtos::video::NewVideoDTO,
     error::DatabaseError,
     models::{user::User, video::NewVideo},
@@ -16,6 +17,7 @@ pub async fn upload_video(
     mut payload: Multipart,
     req: HttpRequest,
     pool: web::Data<DbPool>,
+    config: web::Data<Config>,
 ) -> HttpResponse {
     let extension = req.head().extensions();
     let user = extension.get::<User>().unwrap();
@@ -43,7 +45,7 @@ pub async fn upload_video(
             };
             metadata_is_parsed = true;
         } else if name == "video" {
-            let parent_path = std::path::Path::new("/temp")
+            let parent_path = std::path::Path::new(&config.static_files_dir)
                 .join(user.id.to_string())
                 .join(new_video.id.clone());
             if let Err(_) = std::fs::create_dir_all(&parent_path) {
