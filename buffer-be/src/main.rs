@@ -10,15 +10,14 @@ use dotenv::dotenv;
 use log::info;
 use validator::Validate;
 
+mod common;
 mod config;
-mod controllers;
-mod dtos;
-mod error;
 mod middleware;
-mod models;
 mod routes;
 mod schema;
 mod service;
+mod user;
+mod video;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

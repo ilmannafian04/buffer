@@ -3,8 +3,10 @@ use diesel::{result::DatabaseErrorKind, result::Error, PgConnection, QueryResult
 use rand::Rng;
 use serde::Serialize;
 
-use crate::models::user::User;
-use crate::schema::videos::{self, dsl::videos as all_videos};
+use crate::{
+    schema::videos::{self, dsl::videos as all_videos},
+    user::models::User,
+};
 
 #[derive(Associations, Identifiable, Queryable, Serialize)]
 #[belongs_to(User, foreign_key = "uploader")]

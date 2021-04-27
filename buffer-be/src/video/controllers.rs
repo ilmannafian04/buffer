@@ -5,13 +5,12 @@ use actix_web::{web, HttpRequest, HttpResponse, ResponseError};
 use futures::TryStreamExt;
 
 use crate::{
+    common::{errors::DatabaseError, types::DbPool},
     config::Config,
-    dtos::video::NewVideoDTO,
-    error::DatabaseError,
-    models::{user::User, video::NewVideo},
+    user::models::User,
 };
 
-use super::DbPool;
+use super::{dtos::NewVideoDTO, models::NewVideo};
 
 pub async fn upload_video(
     mut payload: Multipart,

@@ -1,12 +1,15 @@
 use actix_web::{web, HttpRequest, HttpResponse, ResponseError};
 use validator::Validate;
 
-use crate::config::Config;
-use crate::dtos::{user_dto, SimpleError};
-use crate::error::DatabaseError;
-use crate::models::user::{NewUser, UniqueViolationKind, User};
+use crate::{
+    common::{dtos::SimpleError, errors::DatabaseError, types::DbPool},
+    config::Config,
+};
 
-use super::DbPool;
+use super::{
+    dtos::{JWTResponse, SignInDTO},
+    models::{NewUser, UniqueViolationKind, User},
+};
 
 pub async fn signup(mut new_user: web::Json<NewUser>, pool: web::Data<DbPool>) -> HttpResponse {
     if let Err(_) = new_user.validate() {
@@ -48,7 +51,7 @@ pub async fn signup(mut new_user: web::Json<NewUser>, pool: web::Data<DbPool>) -
 
 pub async fn singin(
     pool: web::Data<DbPool>,
-    credential: web::Json<user_dto::SignInDTO>,
+    credential: web::Json<SignInDTO>,
     config: web::Data<Config>,
 ) -> HttpResponse {
     let user = match pool.get() {
@@ -63,7 +66,7 @@ pub async fn singin(
         Err(_) => return DatabaseError::PoolLockError.error_response(),
     };
     match user.authennticate(&credential.password, &config.secret_key) {
-        Ok(jwt) => HttpResponse::Ok().json(user_dto::JWTResponse { jwt }),
+        Ok(jwt) => HttpResponse::Ok().json(JWTResponse { jwt }),
         Err(_) => HttpResponse::Unauthorized().finish(),
     }
 }
