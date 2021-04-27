@@ -1,4 +1,4 @@
-use std::io::Write;
+use std::{io::Write, path::Path};
 
 use actix_multipart::Multipart;
 use actix_web::{web, HttpRequest, HttpResponse, ResponseError};
@@ -44,15 +44,22 @@ pub async fn upload_video(
             };
             metadata_is_parsed = true;
         } else if name == "video" {
-            let parent_path = std::path::Path::new(&config.static_files_dir)
-                .join(user.id.to_string())
-                .join(new_video.id.clone());
-            if let Err(_) = std::fs::create_dir_all(&parent_path) {
+            let base_path = Path::new(&config.static_files_dir);
+            let path_to_video_folder = Path::new(&user.id.to_string()).join(new_video.id.clone());
+            let extension = match Path::new(disposition.get_filename().unwrap()).extension() {
+                Some(ext) => format!("raw.{}", ext.to_str().unwrap()),
+                None => return HttpResponse::BadRequest().finish(),
+            };
+            let video_file_name = Path::new(&extension);
+            if let Err(_) = std::fs::create_dir_all(&base_path.join(&path_to_video_folder)) {
                 return HttpResponse::InternalServerError().finish();
             };
-            let video_path = parent_path.join("raw.mp4");
-            new_video.video_path = video_path.to_str().unwrap().to_owned();
-            let mut video = match web::block(move || std::fs::File::create(video_path)).await {
+            let fs_path = base_path.join(&path_to_video_folder).join(&video_file_name);
+            let db_path = Path::new("/")
+                .join(path_to_video_folder)
+                .join(&video_file_name);
+            new_video.video_path = db_path.to_str().unwrap().to_owned();
+            let mut video = match web::block(move || std::fs::File::create(fs_path)).await {
                 Ok(file) => file,
                 Err(_) => return HttpResponse::InternalServerError().finish(),
             };
