@@ -15,6 +15,7 @@ table! {
         uploader -> Int4,
         title -> Varchar,
         description -> Text,
+        video_path -> Varchar,
         created_at -> Timestamp,
     }
 }

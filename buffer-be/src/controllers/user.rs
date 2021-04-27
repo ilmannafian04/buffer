@@ -1,6 +1,4 @@
-use actix_web::{web, HttpRequest, HttpResponse, Responder, ResponseError};
-use diesel::r2d2::{ConnectionManager, Pool};
-use diesel::PgConnection;
+use actix_web::{web, HttpRequest, HttpResponse, ResponseError};
 use validator::Validate;
 
 use crate::config::Config;
@@ -8,11 +6,7 @@ use crate::dtos::{user_dto, SimpleError};
 use crate::error::DatabaseError;
 use crate::models::user::{NewUser, UniqueViolationKind, User};
 
-type DbPool = Pool<ConnectionManager<PgConnection>>;
-
-pub async fn ping() -> impl Responder {
-    HttpResponse::Ok().body("pong")
-}
+use super::DbPool;
 
 pub async fn signup(mut new_user: web::Json<NewUser>, pool: web::Data<DbPool>) -> HttpResponse {
     if let Err(_) = new_user.validate() {
