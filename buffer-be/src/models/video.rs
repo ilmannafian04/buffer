@@ -1,5 +1,5 @@
 use chrono::NaiveDateTime;
-use diesel::{PgConnection, QueryResult, RunQueryDsl};
+use diesel::{result::DatabaseErrorKind, result::Error, PgConnection, QueryResult, RunQueryDsl};
 use rand::Rng;
 use serde::Serialize;
 
@@ -34,16 +34,32 @@ pub struct NewVideo {
     pub video_path: String,
 }
 
-impl NewVideo {}
+impl NewVideo {
+    pub fn insert(self, conn: &PgConnection) -> QueryResult<Video> {
+        loop {
+            let query = diesel::insert_into(videos::table)
+                .values(&self)
+                .get_result::<Video>(conn);
+            match query {
+                Err(Error::DatabaseError(DatabaseErrorKind::UniqueViolation, _)) => continue,
+                _ => return query,
+            }
+        }
+    }
+
+    pub fn generate_id() -> String {
+        rand::thread_rng()
+            .sample_iter(&rand::distributions::Alphanumeric)
+            .take(16)
+            .map(char::from)
+            .collect()
+    }
+}
 
 impl Default for NewVideo {
     fn default() -> Self {
         Self {
-            id: rand::thread_rng()
-                .sample_iter(&rand::distributions::Alphanumeric)
-                .take(16)
-                .map(char::from)
-                .collect(),
+            id: Self::generate_id(),
             uploader: 0,
             title: "My New Video".to_owned(),
             description: "".to_owned(),

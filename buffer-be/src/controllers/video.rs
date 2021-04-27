@@ -1,11 +1,22 @@
+use std::io::Write;
+
 use actix_multipart::Multipart;
-use actix_web::{HttpRequest, HttpResponse};
+use actix_web::{web, HttpRequest, HttpResponse, ResponseError};
 use futures::TryStreamExt;
 
-use crate::dtos::video::NewVideoDTO;
-use crate::{models::user::User, models::video::NewVideo};
+use crate::{
+    dtos::video::NewVideoDTO,
+    error::DatabaseError,
+    models::{user::User, video::NewVideo},
+};
 
-pub async fn upload_video(mut payload: Multipart, req: HttpRequest) -> HttpResponse {
+use super::DbPool;
+
+pub async fn upload_video(
+    mut payload: Multipart,
+    req: HttpRequest,
+    pool: web::Data<DbPool>,
+) -> HttpResponse {
     let extension = req.head().extensions();
     let user = extension.get::<User>().unwrap();
     let mut new_video = NewVideo::default();
@@ -32,12 +43,38 @@ pub async fn upload_video(mut payload: Multipart, req: HttpRequest) -> HttpRespo
             };
             metadata_is_parsed = true;
         } else if name == "video" {
-            // debug!("video");
+            let parent_path = std::path::Path::new("/temp")
+                .join(user.id.to_string())
+                .join(new_video.id.clone());
+            if let Err(_) = std::fs::create_dir_all(&parent_path) {
+                return HttpResponse::InternalServerError().finish();
+            };
+            let video_path = parent_path.join("raw.mp4");
+            new_video.video_path = video_path.to_str().unwrap().to_owned();
+            let mut video = match web::block(move || std::fs::File::create(video_path)).await {
+                Ok(file) => file,
+                Err(_) => return HttpResponse::InternalServerError().finish(),
+            };
+            while let Ok(Some(chunk)) = field.try_next().await {
+                video = match web::block(move || video.write(&chunk).map(|_| video)).await {
+                    Ok(f) => f,
+                    Err(_) => return HttpResponse::InternalServerError().finish(),
+                };
+            }
             video_is_saved = true;
         }
     }
     if metadata_is_parsed && video_is_saved {
-        HttpResponse::Ok().finish()
+        match pool.get() {
+            Ok(conn) => {
+                let query = web::block(move || new_video.insert(&conn)).await;
+                match query {
+                    Ok(video) => HttpResponse::Ok().json(video),
+                    Err(_) => HttpResponse::InternalServerError().finish(),
+                }
+            }
+            Err(_) => return DatabaseError::PoolLockError.error_response(),
+        }
     } else {
         HttpResponse::BadRequest().finish()
     }
