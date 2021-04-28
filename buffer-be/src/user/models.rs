@@ -5,7 +5,10 @@ use rand::Rng;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
-use crate::schema::users::{self, dsl::users as all_users, dsl::*};
+use crate::schema::{
+    creators, followers,
+    users::{self, dsl::users as all_users, dsl::*},
+};
 
 pub enum UniqueViolationKind {
     Email,
@@ -86,4 +89,21 @@ impl NewUser {
             Err(_) => Err(()),
         }
     }
+}
+
+#[derive(Associations, Debug, Identifiable, Queryable)]
+#[belongs_to(User)]
+pub struct Creator {
+    pub id: String,
+    pub user_id: i32,
+}
+
+#[derive(Associations, Debug, Identifiable, Queryable)]
+#[belongs_to(Creator)]
+#[belongs_to(User, foreign_key = "viewer_id")]
+#[primary_key(creator_id, viewer_id)]
+pub struct Follower {
+    pub creator_id: i32,
+    pub viewer_id: i32,
+    pub created_at: NaiveDateTime,
 }
