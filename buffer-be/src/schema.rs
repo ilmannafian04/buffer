@@ -1,21 +1,20 @@
 table! {
-    creators (id) {
-        id -> Varchar,
-        user_id -> Int4,
+    creators (user_id) {
+        user_id -> Varchar,
     }
 }
 
 table! {
     followers (creator_id, viewer_id) {
         creator_id -> Varchar,
-        viewer_id -> Int4,
+        viewer_id -> Varchar,
         created_at -> Timestamp,
     }
 }
 
 table! {
     users (id) {
-        id -> Int4,
+        id -> Varchar,
         email -> Varchar,
         username -> Varchar,
         password -> Varchar,
@@ -27,7 +26,7 @@ table! {
 table! {
     videos (id) {
         id -> Varchar,
-        uploader -> Int4,
+        uploader -> Varchar,
         title -> Varchar,
         description -> Text,
         video_path -> Varchar,

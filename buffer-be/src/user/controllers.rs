@@ -39,6 +39,7 @@ pub async fn signup(mut new_user: web::Json<NewUser>, pool: web::Data<DbPool>) -
     }
     match pool.get() {
         Ok(conn) => {
+            new_user.generate_id();
             let query = web::block(move || new_user.into_inner().insert(&conn)).await;
             match query {
                 Ok(_) => HttpResponse::Ok().finish(),

@@ -38,7 +38,7 @@ pub async fn upload_video(
                 Ok(dto) => {
                     new_video.title = dto.title;
                     new_video.description = dto.description;
-                    new_video.uploader = user.id;
+                    new_video.uploader = user.id.clone();
                 }
                 Err(_) => return HttpResponse::BadRequest().finish(),
             };

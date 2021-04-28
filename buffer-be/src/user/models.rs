@@ -17,8 +17,7 @@ pub enum UniqueViolationKind {
 
 #[derive(Debug, Identifiable, Queryable, Serialize)]
 pub struct User {
-    #[serde(skip_serializing)]
-    pub id: i32,
+    pub id: String,
     pub email: String,
     pub username: String,
     #[serde(skip_serializing)]
@@ -44,7 +43,7 @@ impl User {
         }
     }
 
-    pub fn find_by_id(conn: &PgConnection, user_id: i32) -> QueryResult<User> {
+    pub fn find_by_id(conn: &PgConnection, user_id: String) -> QueryResult<User> {
         all_users.filter(id.eq(user_id)).first(conn)
     }
 
@@ -60,6 +59,8 @@ impl User {
 #[derive(Debug, Deserialize, Insertable, Validate)]
 #[table_name = "users"]
 pub struct NewUser {
+    #[serde(default)]
+    pub id: String,
     #[validate(email)]
     pub email: String,
     #[validate(length(min = 8))]
@@ -74,6 +75,10 @@ pub struct NewUser {
 impl NewUser {
     pub fn insert(self, conn: &PgConnection) -> QueryResult<User> {
         self.insert_into(users::table).get_result(conn)
+    }
+
+    pub fn generate_id(&mut self) {
+        self.id = uuid::Uuid::new_v4().to_simple().to_string();
     }
 
     pub fn hash_password(&mut self) -> Result<(), ()> {
@@ -93,9 +98,9 @@ impl NewUser {
 
 #[derive(Associations, Debug, Identifiable, Queryable)]
 #[belongs_to(User)]
+#[primary_key(user_id)]
 pub struct Creator {
-    pub id: String,
-    pub user_id: i32,
+    pub user_id: String,
 }
 
 #[derive(Associations, Debug, Identifiable, Queryable)]
@@ -103,7 +108,7 @@ pub struct Creator {
 #[belongs_to(User, foreign_key = "viewer_id")]
 #[primary_key(creator_id, viewer_id)]
 pub struct Follower {
-    pub creator_id: i32,
-    pub viewer_id: i32,
+    pub creator_id: String,
+    pub viewer_id: String,
     pub created_at: NaiveDateTime,
 }

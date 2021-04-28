@@ -26,10 +26,7 @@ pub async fn auth_validator(
         .unwrap();
     match pool.get() {
         Ok(conn) => {
-            let query = web::block(move || {
-                User::find_by_id(&conn, claim.claims.sub.parse::<i32>().unwrap())
-            })
-            .await;
+            let query = web::block(move || User::find_by_id(&conn, claim.claims.sub)).await;
             match query {
                 Ok(user) => {
                     request.extensions_mut().insert(user);

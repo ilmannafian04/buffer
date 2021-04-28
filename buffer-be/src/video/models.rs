@@ -12,7 +12,7 @@ use crate::{
 #[belongs_to(User, foreign_key = "uploader")]
 pub struct Video {
     pub id: String,
-    pub uploader: i32,
+    pub uploader: String,
     pub title: String,
     pub description: String,
     pub video_path: String,
@@ -30,7 +30,7 @@ impl Video {
 #[table_name = "videos"]
 pub struct NewVideo {
     pub id: String,
-    pub uploader: i32,
+    pub uploader: String,
     pub title: String,
     pub description: String,
     pub video_path: String,
@@ -62,7 +62,7 @@ impl Default for NewVideo {
     fn default() -> Self {
         Self {
             id: Self::generate_id(),
-            uploader: 0,
+            uploader: "".to_owned(),
             title: "My New Video".to_owned(),
             description: "".to_owned(),
             video_path: "".to_owned(),

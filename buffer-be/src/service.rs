@@ -14,7 +14,7 @@ pub struct Claims {
 }
 
 impl Claims {
-    fn new(subject: i32, iat: DateTime<Utc>, exp: DateTime<Utc>) -> Self {
+    fn new(subject: String, iat: DateTime<Utc>, exp: DateTime<Utc>) -> Self {
         Self {
             sub: subject.to_string(),
             iat: iat
