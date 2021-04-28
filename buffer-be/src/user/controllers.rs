@@ -8,7 +8,7 @@ use crate::{
 
 use super::{
     dtos::{JWTResponse, SignInDTO},
-    models::{NewUser, UniqueViolationKind, User},
+    models::{Creator, NewUser, UniqueViolationKind, User},
 };
 
 pub async fn signup(mut new_user: web::Json<NewUser>, pool: web::Data<DbPool>) -> HttpResponse {
@@ -37,10 +37,20 @@ pub async fn signup(mut new_user: web::Json<NewUser>, pool: web::Data<DbPool>) -
     if let Err(_) = new_user.hash_password() {
         return HttpResponse::InternalServerError().finish();
     }
-    match pool.get() {
+    let user = match pool.get() {
         Ok(conn) => {
             new_user.generate_id();
             let query = web::block(move || new_user.into_inner().insert(&conn)).await;
+            match query {
+                Ok(user) => user,
+                Err(_) => return HttpResponse::InternalServerError().finish(),
+            }
+        }
+        Err(_) => return DatabaseError::PoolLockError.error_response(),
+    };
+    match pool.get() {
+        Ok(conn) => {
+            let query = web::block(move || Creator { user_id: user.id }.insert(&conn)).await;
             match query {
                 Ok(_) => HttpResponse::Ok().finish(),
                 Err(_) => return HttpResponse::InternalServerError().finish(),

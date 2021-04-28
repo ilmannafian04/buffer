@@ -96,11 +96,17 @@ impl NewUser {
     }
 }
 
-#[derive(Associations, Debug, Identifiable, Queryable)]
+#[derive(Associations, Debug, Identifiable, Insertable, Queryable)]
 #[belongs_to(User)]
 #[primary_key(user_id)]
 pub struct Creator {
     pub user_id: String,
+}
+
+impl Creator {
+    pub fn insert(self, conn: &PgConnection) -> QueryResult<Creator> {
+        self.insert_into(creators::table).get_result(conn)
+    }
 }
 
 #[derive(Associations, Debug, Identifiable, Queryable)]
