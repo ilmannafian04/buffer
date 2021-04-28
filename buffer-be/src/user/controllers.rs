@@ -7,8 +7,8 @@ use crate::{
 };
 
 use super::{
-    dtos::{JWTResponse, SignInDTO},
-    models::{Creator, NewUser, UniqueViolationKind, User},
+    dtos::{FollowDTO, JWTResponse, SignInDTO},
+    models::{Creator, NewFollower, NewUser, UniqueViolationKind, User},
 };
 
 pub async fn signup(mut new_user: web::Json<NewUser>, pool: web::Data<DbPool>) -> HttpResponse {
@@ -84,4 +84,35 @@ pub async fn singin(
 
 pub async fn user_info(request: HttpRequest) -> HttpResponse {
     HttpResponse::Ok().json(request.head().extensions().get::<User>().unwrap())
+}
+
+pub async fn follow(
+    request: HttpRequest,
+    payload: web::Json<FollowDTO>,
+    pool: web::Data<DbPool>,
+) -> HttpResponse {
+    let extension = request.head().extensions();
+    let user = extension.get::<User>().unwrap();
+    let creator = match pool.get() {
+        Ok(conn) => {
+            let query =
+                web::block(move || User::find_by_id(&conn, payload.creator_id.clone())).await;
+            match query {
+                Ok(creator) => creator,
+                Err(_) => return HttpResponse::NotFound().finish(),
+            }
+        }
+        Err(_) => return DatabaseError::PoolLockError.error_response(),
+    };
+    let follower = NewFollower {
+        creator_id: creator.id,
+        viewer_id: user.id.clone(),
+    };
+    match pool.get() {
+        Ok(conn) => match web::block(move || follower.insert(&conn)).await {
+            Ok(_) => HttpResponse::Ok().finish(),
+            Err(_) => HttpResponse::InternalServerError().finish(),
+        },
+        Err(_) => return DatabaseError::PoolLockError.error_response(),
+    }
 }

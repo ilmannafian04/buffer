@@ -10,3 +10,9 @@ pub struct SignInDTO {
 pub struct JWTResponse {
     pub jwt: String,
 }
+
+#[derive(Deserialize)]
+pub struct FollowDTO {
+    #[serde(rename = "creatorId")]
+    pub creator_id: String,
+}

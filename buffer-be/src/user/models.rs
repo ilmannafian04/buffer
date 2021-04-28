@@ -118,3 +118,16 @@ pub struct Follower {
     pub viewer_id: String,
     pub created_at: NaiveDateTime,
 }
+
+#[derive(Debug, Insertable)]
+#[table_name = "followers"]
+pub struct NewFollower {
+    pub creator_id: String,
+    pub viewer_id: String,
+}
+
+impl NewFollower {
+    pub fn insert(self, conn: &PgConnection) -> QueryResult<Follower> {
+        self.insert_into(followers::table).get_result(conn)
+    }
+}

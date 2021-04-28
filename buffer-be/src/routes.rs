@@ -16,6 +16,7 @@ pub fn configuration(cfg: &mut web::ServiceConfig) {
         web::scope("/api/auth")
             .route("/ping", web::get().to(c::ping))
             .route("/account", web::get().to(u::user_info))
+            .route("/follow", web::post().to(u::follow))
             .wrap(HttpAuthentication::bearer(auth_validator)),
     )
     .service(
