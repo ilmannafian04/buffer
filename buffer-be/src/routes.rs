@@ -8,14 +8,9 @@ use crate::{
 
 pub fn configuration(cfg: &mut web::ServiceConfig) {
     cfg.service(
-        web::scope("/api/auth/video")
+        web::scope("/api/a/video")
             .route("/", web::post().to(v::upload_video))
-            .wrap(HttpAuthentication::bearer(auth_validator)),
-    )
-    .service(
-        web::scope("/api/auth")
-            .route("/ping", web::get().to(c::ping))
-            .route("/account", web::get().to(u::user_info))
+            .route("/comment", web::post().to(v::new_comment))
             .wrap(HttpAuthentication::bearer(auth_validator)),
     )
     .service(
@@ -26,6 +21,12 @@ pub fn configuration(cfg: &mut web::ServiceConfig) {
             .wrap(HttpAuthentication::bearer(auth_validator)),
     )
     .service(web::scope("/api/creator").route("", web::get().to(u::creator_profile)))
+    .service(
+        web::scope("/api/auth")
+            .route("/ping", web::get().to(c::ping))
+            .route("/account", web::get().to(u::user_info))
+            .wrap(HttpAuthentication::bearer(auth_validator)),
+    )
     .service(
         web::scope("/api")
             .route("/ping", web::get().to(c::ping))

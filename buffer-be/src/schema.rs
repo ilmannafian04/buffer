@@ -1,4 +1,14 @@
 table! {
+    comments (id) {
+        id -> Varchar,
+        video_id -> Varchar,
+        user_id -> Varchar,
+        content -> Text,
+        created_at -> Timestamp,
+    }
+}
+
+table! {
     creators (user_id) {
         user_id -> Varchar,
     }
@@ -34,12 +44,15 @@ table! {
     }
 }
 
+joinable!(comments -> users (user_id));
+joinable!(comments -> videos (video_id));
 joinable!(creators -> users (user_id));
 joinable!(followers -> creators (creator_id));
 joinable!(followers -> users (viewer_id));
 joinable!(videos -> users (uploader));
 
 allow_tables_to_appear_in_same_query!(
+    comments,
     creators,
     followers,
     users,

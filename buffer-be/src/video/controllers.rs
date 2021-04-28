@@ -1,7 +1,8 @@
 use std::{io::Write, path::Path};
 
 use actix_multipart::Multipart;
-use actix_web::{web, HttpRequest, HttpResponse, ResponseError};
+use actix_web::{error::BlockingError, web, HttpRequest, HttpResponse, ResponseError};
+use diesel::result::Error;
 use futures::TryStreamExt;
 
 use crate::{
@@ -10,7 +11,10 @@ use crate::{
     user::models::User,
 };
 
-use super::{dtos::NewVideoDTO, models::NewVideo};
+use super::{
+    dtos::{NewCommentDTO, NewVideoDTO},
+    models::{NewComment, NewVideo, Video},
+};
 
 pub async fn upload_video(
     mut payload: Multipart,
@@ -85,5 +89,29 @@ pub async fn upload_video(
         }
     } else {
         HttpResponse::BadRequest().finish()
+    }
+}
+
+pub async fn new_comment(
+    pool: web::Data<DbPool>,
+    payload: web::Json<NewCommentDTO>,
+    req: HttpRequest,
+) -> HttpResponse {
+    let u_id = req.head().extensions().get::<User>().unwrap().id.clone();
+    let conn = pool.get().unwrap();
+    let v_id_closure = payload.video_id.clone();
+    let video = match web::block(move || Video::find_by_id(&conn, &v_id_closure)).await {
+        Ok(v) => v,
+        Err(BlockingError::Error(Error::NotFound)) => return HttpResponse::NotFound().finish(),
+        _ => return HttpResponse::InternalServerError().finish(),
+    };
+    let conn = pool.get().unwrap();
+    let mut new_comment = NewComment::default();
+    new_comment.user_id = u_id;
+    new_comment.video_id = video.id.clone();
+    new_comment.content = payload.content.clone();
+    match web::block(move || new_comment.insert(&conn)).await {
+        Ok(c) => HttpResponse::Ok().json(c),
+        _ => HttpResponse::InternalServerError().finish(),
     }
 }
