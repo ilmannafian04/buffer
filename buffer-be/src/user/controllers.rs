@@ -9,7 +9,7 @@ use crate::{
 
 use super::{
     dtos::{FollowDTO, JWTResponse, SignInDTO},
-    models::{Creator, NewFollower, NewUser, UniqueViolationKind, User},
+    models::{Creator, Follower, NewFollower, NewUser, UniqueViolationKind, User},
 };
 
 pub async fn signup(mut new_user: web::Json<NewUser>, pool: web::Data<DbPool>) -> HttpResponse {
@@ -119,6 +119,36 @@ pub async fn follow(
             ))) => HttpResponse::Ok().finish(),
             Err(_) => HttpResponse::InternalServerError().finish(),
         },
+        Err(_) => return DatabaseError::PoolLockError.error_response(),
+    }
+}
+
+pub async fn unfollow(
+    request: HttpRequest,
+    payload: web::Json<FollowDTO>,
+    pool: web::Data<DbPool>,
+) -> HttpResponse {
+    let extension = request.head().extensions();
+    let user = extension.get::<User>().unwrap();
+    let creator = match pool.get() {
+        Ok(conn) => {
+            let query =
+                web::block(move || User::find_by_id(&conn, payload.creator_id.clone())).await;
+            match query {
+                Ok(creator) => creator,
+                Err(_) => return HttpResponse::NotFound().finish(),
+            }
+        }
+        Err(_) => return DatabaseError::PoolLockError.error_response(),
+    };
+    let user_id_closure = user.id.clone();
+    match pool.get() {
+        Ok(conn) => {
+            match web::block(move || Follower::delete(&conn, &creator.id, &user_id_closure)).await {
+                Ok(_) => HttpResponse::Ok().finish(),
+                Err(_) => HttpResponse::InternalServerError().finish(),
+            }
+        }
         Err(_) => return DatabaseError::PoolLockError.error_response(),
     }
 }

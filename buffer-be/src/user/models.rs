@@ -6,7 +6,8 @@ use serde::{Deserialize, Serialize};
 use validator::Validate;
 
 use crate::schema::{
-    creators, followers,
+    creators,
+    followers::{self, dsl::followers as all_followers},
     users::{self, dsl::users as all_users, dsl::*},
 };
 
@@ -117,6 +118,21 @@ pub struct Follower {
     pub creator_id: String,
     pub viewer_id: String,
     pub created_at: NaiveDateTime,
+}
+
+impl Follower {
+    pub fn delete(
+        conn: &PgConnection,
+        creator_id: &String,
+        user_id: &String,
+    ) -> QueryResult<usize> {
+        diesel::delete(
+            all_followers
+                .filter(followers::dsl::creator_id.eq(creator_id))
+                .filter(followers::dsl::viewer_id.eq(user_id)),
+        )
+        .execute(conn)
+    }
 }
 
 #[derive(Debug, Insertable)]

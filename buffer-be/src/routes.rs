@@ -17,6 +17,7 @@ pub fn configuration(cfg: &mut web::ServiceConfig) {
             .route("/ping", web::get().to(c::ping))
             .route("/account", web::get().to(u::user_info))
             .route("/follow", web::post().to(u::follow))
+            .route("/unfollow", web::post().to(u::unfollow))
             .wrap(HttpAuthentication::bearer(auth_validator)),
     )
     .service(
