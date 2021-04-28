@@ -1,6 +1,8 @@
+use std::usize;
+
 use argon2::hash_encoded;
 use chrono::NaiveDateTime;
-use diesel::{prelude::*, PgConnection};
+use diesel::{dsl::count_star, prelude::*, PgConnection};
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
@@ -8,7 +10,7 @@ use validator::Validate;
 use crate::schema::{
     creators,
     followers::{self, dsl::followers as all_followers},
-    users::{self, dsl::users as all_users, dsl::*},
+    users::{self, dsl::users as all_users},
 };
 
 pub enum UniqueViolationKind {
@@ -45,15 +47,23 @@ impl User {
     }
 
     pub fn find_by_id(conn: &PgConnection, user_id: String) -> QueryResult<User> {
+        use crate::schema::users::dsl::id;
         all_users.filter(id.eq(user_id)).first(conn)
     }
 
     pub fn find_by_email(conn: &PgConnection, mail: &String) -> QueryResult<User> {
+        use crate::schema::users::dsl::email;
         all_users.filter(email.eq(mail)).first(conn)
     }
 
     pub fn find_by_username(conn: &PgConnection, uname: &String) -> QueryResult<User> {
+        use crate::schema::users::dsl::username;
         all_users.filter(username.eq(uname)).first(conn)
+    }
+
+    pub fn find_by_display_name(conn: &PgConnection, d_name: &String) -> QueryResult<User> {
+        use crate::schema::users::dsl::display_name;
+        all_users.filter(display_name.eq(d_name)).first(conn)
     }
 }
 
@@ -132,6 +142,26 @@ impl Follower {
                 .filter(followers::dsl::viewer_id.eq(user_id)),
         )
         .execute(conn)
+    }
+
+    pub fn get_follower_count(conn: &PgConnection, c_id: &String) -> QueryResult<i64> {
+        use crate::schema::followers::dsl::creator_id;
+        all_followers
+            .filter(creator_id.eq(c_id))
+            .select(count_star())
+            .first(conn)
+    }
+
+    pub fn get_by_creator_and_viewer(
+        conn: &PgConnection,
+        c_id: &str,
+        v_id: &str,
+    ) -> QueryResult<Follower> {
+        use crate::schema::followers::dsl::{creator_id, viewer_id};
+        all_followers
+            .filter(creator_id.eq(c_id))
+            .filter(viewer_id.eq(v_id))
+            .first(conn)
     }
 }
 

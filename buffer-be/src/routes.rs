@@ -16,10 +16,16 @@ pub fn configuration(cfg: &mut web::ServiceConfig) {
         web::scope("/api/auth")
             .route("/ping", web::get().to(c::ping))
             .route("/account", web::get().to(u::user_info))
+            .wrap(HttpAuthentication::bearer(auth_validator)),
+    )
+    .service(
+        web::scope("/api/a/creator")
+            .route("/follow", web::get().to(u::is_following))
             .route("/follow", web::post().to(u::follow))
             .route("/unfollow", web::post().to(u::unfollow))
             .wrap(HttpAuthentication::bearer(auth_validator)),
     )
+    .service(web::scope("/api/creator").route("", web::get().to(u::creator_profile)))
     .service(
         web::scope("/api")
             .route("/ping", web::get().to(c::ping))

@@ -8,7 +8,9 @@ use crate::{
 };
 
 use super::{
-    dtos::{FollowDTO, JWTResponse, SignInDTO},
+    dtos::{
+        CreatorLookUpDTO, CreatorProfileResponseDTO, IsFollowingResponseDTO, JWTResponse, SignInDTO,
+    },
     models::{Creator, Follower, NewFollower, NewUser, UniqueViolationKind, User},
 };
 
@@ -89,15 +91,17 @@ pub async fn user_info(request: HttpRequest) -> HttpResponse {
 
 pub async fn follow(
     request: HttpRequest,
-    payload: web::Json<FollowDTO>,
+    payload: web::Json<CreatorLookUpDTO>,
     pool: web::Data<DbPool>,
 ) -> HttpResponse {
     let extension = request.head().extensions();
     let user = extension.get::<User>().unwrap();
     let creator = match pool.get() {
         Ok(conn) => {
-            let query =
-                web::block(move || User::find_by_id(&conn, payload.creator_id.clone())).await;
+            let query = web::block(move || {
+                User::find_by_display_name(&conn, &payload.display_name.clone())
+            })
+            .await;
             match query {
                 Ok(creator) => creator,
                 Err(_) => return HttpResponse::NotFound().finish(),
@@ -125,15 +129,17 @@ pub async fn follow(
 
 pub async fn unfollow(
     request: HttpRequest,
-    payload: web::Json<FollowDTO>,
+    payload: web::Json<CreatorLookUpDTO>,
     pool: web::Data<DbPool>,
 ) -> HttpResponse {
     let extension = request.head().extensions();
     let user = extension.get::<User>().unwrap();
     let creator = match pool.get() {
         Ok(conn) => {
-            let query =
-                web::block(move || User::find_by_id(&conn, payload.creator_id.clone())).await;
+            let query = web::block(move || {
+                User::find_by_display_name(&conn, &payload.display_name.clone())
+            })
+            .await;
             match query {
                 Ok(creator) => creator,
                 Err(_) => return HttpResponse::NotFound().finish(),
@@ -150,5 +156,63 @@ pub async fn unfollow(
             }
         }
         Err(_) => return DatabaseError::PoolLockError.error_response(),
+    }
+}
+
+pub async fn creator_profile(
+    pool: web::Data<DbPool>,
+    query: web::Query<CreatorLookUpDTO>,
+) -> HttpResponse {
+    let creator = match pool.get() {
+        Ok(conn) => {
+            match web::block(move || User::find_by_display_name(&conn, &query.display_name)).await {
+                Ok(creator) => creator,
+                Err(_) => return HttpResponse::NotFound().finish(),
+            }
+        }
+        Err(_) => return DatabaseError::PoolLockError.error_response(),
+    };
+    let c_id_closure = creator.id.clone();
+    let follower_count = match pool.get() {
+        Ok(conn) => {
+            match web::block(move || Follower::get_follower_count(&conn, &c_id_closure)).await {
+                Ok(count) => count,
+                Err(_) => return HttpResponse::InternalServerError().body("count"),
+            }
+        }
+        Err(_) => return DatabaseError::PoolLockError.error_response(),
+    };
+    HttpResponse::Ok().json(CreatorProfileResponseDTO {
+        creator,
+        follower_count,
+    })
+}
+
+pub async fn is_following(
+    request: HttpRequest,
+    pool: web::Data<DbPool>,
+    query: web::Query<CreatorLookUpDTO>,
+) -> HttpResponse {
+    let extension = request.head().extensions();
+    let user = extension.get::<User>().unwrap();
+    let conn = pool.get().unwrap();
+    let creator =
+        match web::block(move || User::find_by_display_name(&conn, &query.display_name)).await {
+            Ok(c) => c,
+            Err(BlockingError::Error(Error::NotFound)) => return HttpResponse::NotFound().finish(),
+            _ => return HttpResponse::InternalServerError().finish(),
+        };
+    let conn = pool.get().unwrap();
+    let u_id_closure = user.id.clone();
+    match web::block(move || Follower::get_by_creator_and_viewer(&conn, &creator.id, &u_id_closure))
+        .await
+    {
+        Ok(_) => HttpResponse::Ok().json(IsFollowingResponseDTO { is_following: true }),
+        Err(BlockingError::Error(Error::NotFound)) => {
+            HttpResponse::Ok().json(IsFollowingResponseDTO {
+                is_following: false,
+            })
+        }
+        _ => HttpResponse::InternalServerError().finish(),
     }
 }
