@@ -1,4 +1,5 @@
-use actix_web::{web, HttpRequest, HttpResponse, ResponseError};
+use actix_web::{error::BlockingError, web, HttpRequest, HttpResponse, ResponseError};
+use diesel::{result::DatabaseErrorKind, result::Error};
 use validator::Validate;
 
 use crate::{
@@ -110,7 +111,12 @@ pub async fn follow(
     };
     match pool.get() {
         Ok(conn) => match web::block(move || follower.insert(&conn)).await {
-            Ok(_) => HttpResponse::Ok().finish(),
+            // following already followed person won't do anything
+            Ok(_)
+            | Err(BlockingError::Error(Error::DatabaseError(
+                DatabaseErrorKind::UniqueViolation,
+                _,
+            ))) => HttpResponse::Ok().finish(),
             Err(_) => HttpResponse::InternalServerError().finish(),
         },
         Err(_) => return DatabaseError::PoolLockError.error_response(),
