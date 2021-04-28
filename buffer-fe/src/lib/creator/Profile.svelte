@@ -1,5 +1,4 @@
 <script lang="ts">
-  import axios from 'axios';
   // noinspection TypeScriptCheckImport
   import { Button, Icon } from 'svelma';
   import { onMount } from 'svelte';
@@ -54,7 +53,6 @@
       navigate('/signin');
     }
   };
-  $: console.log(following);
 </script>
 
 <div class="name-section">
