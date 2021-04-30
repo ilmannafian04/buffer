@@ -7,7 +7,7 @@ use futures::TryStreamExt;
 use validator::Validate;
 
 use crate::{
-    common::{dtos::IdQuery, errors::DatabaseError, types::DbPool},
+    common::{dtos::IdQuery, errors::DatabaseError, models::ResolveMediaURL, types::DbPool},
     config::Config,
     user::models::User,
 };
@@ -28,6 +28,12 @@ pub async fn upload_video(
     let mut new_video = NewVideo::default();
     let mut metadata_is_parsed = false;
     let mut video_is_saved = false;
+    let mut thumbnail_is_saved = false;
+    let base_path = Path::new(&config.media_base_dir);
+    let path_to_video_folder = Path::new(&user.id.to_string()).join(new_video.id.clone());
+    if let Err(_) = std::fs::create_dir_all(&base_path.join(&path_to_video_folder)) {
+        return HttpResponse::InternalServerError().finish();
+    };
     while let Ok(Some(mut field)) = payload.try_next().await {
         let disposition = field.content_disposition().unwrap();
         let name = disposition.get_name().unwrap();
@@ -49,19 +55,14 @@ pub async fn upload_video(
             };
             metadata_is_parsed = true;
         } else if name == "video" {
-            let base_path = Path::new(&config.media_base_dir);
-            let path_to_video_folder = Path::new(&user.id.to_string()).join(new_video.id.clone());
             let extension = match Path::new(disposition.get_filename().unwrap()).extension() {
                 Some(ext) => format!("raw.{}", ext.to_str().unwrap()),
                 None => return HttpResponse::BadRequest().finish(),
             };
             let video_file_name = Path::new(&extension);
-            if let Err(_) = std::fs::create_dir_all(&base_path.join(&path_to_video_folder)) {
-                return HttpResponse::InternalServerError().finish();
-            };
             let fs_path = base_path.join(&path_to_video_folder).join(&video_file_name);
             let db_path = Path::new("/")
-                .join(path_to_video_folder)
+                .join(&path_to_video_folder)
                 .join(&video_file_name);
             new_video.video_path = db_path.to_str().unwrap().to_owned();
             let mut video = match web::block(move || std::fs::File::create(fs_path)).await {
@@ -75,14 +76,40 @@ pub async fn upload_video(
                 };
             }
             video_is_saved = true;
+        } else if name == "thumbnail" {
+            let file_name = match Path::new(disposition.get_filename().unwrap()).extension() {
+                Some(ext) => format!("thumbnail.{}", ext.to_str().unwrap()),
+                None => return HttpResponse::BadRequest().finish(),
+            };
+            let thumbnail_name = Path::new(&file_name);
+            let fs_path = base_path.join(&path_to_video_folder).join(&thumbnail_name);
+            let db_path = Path::new("/")
+                .join(&path_to_video_folder)
+                .join(&thumbnail_name);
+            new_video.thumbnail_path = db_path.to_str().unwrap().to_owned();
+            let mut thumbnail = match web::block(move || std::fs::File::create(fs_path)).await {
+                Ok(f) => f,
+                Err(_) => return HttpResponse::InternalServerError().finish(),
+            };
+            while let Ok(Some(chunk)) = field.try_next().await {
+                thumbnail =
+                    match web::block(move || thumbnail.write(&chunk).map(|_| thumbnail)).await {
+                        Ok(f) => f,
+                        Err(_) => return HttpResponse::InternalServerError().finish(),
+                    }
+            }
+            thumbnail_is_saved = true;
         }
     }
-    if metadata_is_parsed && video_is_saved {
+    if metadata_is_parsed && video_is_saved && thumbnail_is_saved {
         match pool.get() {
             Ok(conn) => {
                 let query = web::block(move || new_video.insert(&conn)).await;
                 match query {
-                    Ok(video) => HttpResponse::Ok().json(video),
+                    Ok(mut video) => {
+                        video.resolve(&config.media_base_url);
+                        HttpResponse::Ok().json(video)
+                    }
                     Err(_) => HttpResponse::InternalServerError().finish(),
                 }
             }
@@ -117,7 +144,11 @@ pub async fn new_comment(
     }
 }
 
-pub async fn list_videos(pool: web::Data<DbPool>, query: web::Query<VideoListDTO>) -> HttpResponse {
+pub async fn list_videos(
+    pool: web::Data<DbPool>,
+    query: web::Query<VideoListDTO>,
+    config: web::Data<Config>,
+) -> HttpResponse {
     if let Err(_) = query.validate() {
         return HttpResponse::BadRequest().finish();
     }
@@ -125,17 +156,27 @@ pub async fn list_videos(pool: web::Data<DbPool>, query: web::Query<VideoListDTO
     match web::block(move || Video::find_many_sort_by_new(&conn, query.skip)).await {
         Ok(v) => HttpResponse::Ok().json(
             v.into_iter()
-                .map(VideoListResponseDTO::from)
+                .map(|mut t| {
+                    t.0.resolve(&config.media_base_url);
+                    VideoListResponseDTO::from(t)
+                })
                 .collect::<Vec<VideoListResponseDTO>>(),
         ),
         Err(_) => return HttpResponse::InternalServerError().finish(),
     }
 }
 
-pub async fn video_detail(pool: web::Data<DbPool>, query: web::Query<IdQuery>) -> HttpResponse {
+pub async fn video_detail(
+    pool: web::Data<DbPool>,
+    query: web::Query<IdQuery>,
+    config: web::Data<Config>,
+) -> HttpResponse {
     let conn = pool.get().unwrap();
     match web::block(move || Video::find_by_id_join_user(&conn, &query.id)).await {
-        Ok(t) => HttpResponse::Ok().json(VideoDetailDTO::from(t)),
+        Ok(mut t) => {
+            t.0.resolve(&config.media_base_url);
+            HttpResponse::Ok().json(VideoDetailDTO::from(t))
+        }
         Err(BlockingError::Error(Error::NotFound)) => return HttpResponse::NotFound().finish(),
         _ => return HttpResponse::InternalServerError().finish(),
     }

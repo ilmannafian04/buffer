@@ -4,5 +4,6 @@ CREATE TABLE videos (
     title VARCHAR NOT NULL,
     description TEXT NOT NULL,
     video_path VARCHAR NOT NULL,
+    thumbnail_path VARCHAR NOT NULL,
     created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (CURRENT_TIMESTAMP AT TIME ZONE 'utc')
 );

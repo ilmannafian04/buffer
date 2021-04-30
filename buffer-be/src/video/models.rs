@@ -5,11 +5,12 @@ use diesel::{
 use rand::Rng;
 use serde::Serialize;
 
-use crate::schema::{
-    comments, users,
-    videos::{self, dsl::videos as all_videos},
+use crate::{
+    common::models::ResolveMediaURL,
+    schema::videos::{self, dsl::videos as all_videos},
+    schema::{comments, users},
+    user::models::User,
 };
-use crate::user::models::User;
 
 #[derive(Associations, Identifiable, Queryable, Serialize)]
 #[belongs_to(User, foreign_key = "uploader")]
@@ -19,6 +20,7 @@ pub struct Video {
     pub title: String,
     pub description: String,
     pub video_path: String,
+    pub thumbnail_path: String,
     pub created_at: NaiveDateTime,
 }
 
@@ -53,6 +55,14 @@ impl Video {
     }
 }
 
+impl ResolveMediaURL for Video {
+    fn resolve(&mut self, base_url: &str) {
+        let base = url::Url::parse(base_url).unwrap();
+        self.video_path = base.join(&self.video_path).unwrap().to_string();
+        self.thumbnail_path = base.join(&self.video_path).unwrap().to_string();
+    }
+}
+
 #[derive(Debug, Insertable)]
 #[table_name = "videos"]
 pub struct NewVideo {
@@ -61,6 +71,7 @@ pub struct NewVideo {
     pub title: String,
     pub description: String,
     pub video_path: String,
+    pub thumbnail_path: String,
 }
 
 impl NewVideo {
@@ -93,6 +104,7 @@ impl Default for NewVideo {
             title: "My New Video".to_owned(),
             description: "".to_owned(),
             video_path: "".to_owned(),
+            thumbnail_path: "".to_owned(),
         }
     }
 }

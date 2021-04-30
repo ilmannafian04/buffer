@@ -40,6 +40,7 @@ table! {
         title -> Varchar,
         description -> Text,
         video_path -> Varchar,
+        thumbnail_path -> Varchar,
         created_at -> Timestamp,
     }
 }
