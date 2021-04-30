@@ -4,6 +4,7 @@ use actix_multipart::Multipart;
 use actix_web::{error::BlockingError, web, HttpRequest, HttpResponse, ResponseError};
 use diesel::result::Error;
 use futures::TryStreamExt;
+use validator::Validate;
 
 use crate::{
     common::{errors::DatabaseError, types::DbPool},
@@ -12,7 +13,7 @@ use crate::{
 };
 
 use super::{
-    dtos::{NewCommentDTO, NewVideoDTO},
+    dtos::{NewCommentDTO, NewVideoDTO, VideoListDTO, VideoListResponseDTO},
     models::{NewComment, NewVideo, Video},
 };
 
@@ -113,5 +114,20 @@ pub async fn new_comment(
     match web::block(move || new_comment.insert(&conn)).await {
         Ok(c) => HttpResponse::Ok().json(c),
         _ => HttpResponse::InternalServerError().finish(),
+    }
+}
+
+pub async fn list_videos(pool: web::Data<DbPool>, query: web::Query<VideoListDTO>) -> HttpResponse {
+    if let Err(_) = query.validate() {
+        return HttpResponse::BadRequest().finish();
+    }
+    let conn = pool.get().unwrap();
+    match web::block(move || Video::find_many_sort_by_new(&conn, query.skip)).await {
+        Ok(v) => HttpResponse::Ok().json(
+            v.into_iter()
+                .map(VideoListResponseDTO::from)
+                .collect::<Vec<VideoListResponseDTO>>(),
+        ),
+        Err(_) => return HttpResponse::InternalServerError().finish(),
     }
 }

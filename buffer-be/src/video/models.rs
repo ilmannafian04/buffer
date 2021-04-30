@@ -6,7 +6,7 @@ use rand::Rng;
 use serde::Serialize;
 
 use crate::schema::{
-    comments,
+    comments, users,
     videos::{self, dsl::videos as all_videos},
 };
 use crate::user::models::User;
@@ -19,7 +19,6 @@ pub struct Video {
     pub title: String,
     pub description: String,
     pub video_path: String,
-    #[serde(skip_serializing)]
     pub created_at: NaiveDateTime,
 }
 
@@ -30,6 +29,19 @@ impl Video {
 
     pub fn find_by_id(conn: &PgConnection, v_id: &str) -> QueryResult<Video> {
         all_videos.find(v_id).get_result(conn)
+    }
+
+    pub fn find_many_sort_by_new(
+        conn: &PgConnection,
+        skip: i64,
+    ) -> QueryResult<Vec<(Video, Option<User>)>> {
+        use crate::schema::videos::dsl::created_at;
+        all_videos
+            .left_join(users::table)
+            .limit(10)
+            .offset(skip)
+            .order_by(created_at.desc())
+            .get_results(conn)
     }
 }
 
