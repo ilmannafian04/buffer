@@ -10,7 +10,8 @@ pub struct Config {
     pub redis_url: String,
     #[validate(length(min = 32))]
     pub secret_key: String,
-    pub static_files_dir: String,
+    pub media_base_dir: String,
+    pub media_base_url: String,
 }
 
 impl Config {
@@ -23,15 +24,16 @@ impl Config {
         let database_url = env::var("DATABASE_URL").expect("Config: DATABASE_URL not set");
         let redis_url = env::var("REDIS_URL").expect("Config: REDIS_URL not set");
         let secret_key = env::var("SECRET_KEY").expect("Config: SECRET_KEY not set");
-        let static_files_dir =
-            env::var("STATIC_FILES_DIR").expect("Config: STATIC_FILES_DIR not set");
+        let media_base_dir = env::var("MEDIA_BASE_DIR").expect("Config: MEDIA_BASE_DIR not set");
+        let media_base_url = env::var("MEDIA_BASE_URL").expect("Config: MEDIA_BASE_URL not set");
         Config {
             host,
             port,
             database_url,
             redis_url,
             secret_key,
-            static_files_dir,
+            media_base_dir,
+            media_base_url,
         }
     }
 }

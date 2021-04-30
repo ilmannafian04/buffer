@@ -49,7 +49,7 @@ pub async fn upload_video(
             };
             metadata_is_parsed = true;
         } else if name == "video" {
-            let base_path = Path::new(&config.static_files_dir);
+            let base_path = Path::new(&config.media_base_dir);
             let path_to_video_folder = Path::new(&user.id.to_string()).join(new_video.id.clone());
             let extension = match Path::new(disposition.get_filename().unwrap()).extension() {
                 Some(ext) => format!("raw.{}", ext.to_str().unwrap()),
