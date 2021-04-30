@@ -31,6 +31,14 @@ impl Video {
         all_videos.find(v_id).get_result(conn)
     }
 
+    pub fn find_by_id_join_user(conn: &PgConnection, v_id: &str) -> QueryResult<(Video, User)> {
+        use crate::schema::videos::dsl::id;
+        all_videos
+            .filter(id.eq(v_id))
+            .inner_join(users::table)
+            .get_result(conn)
+    }
+
     pub fn find_many_sort_by_new(
         conn: &PgConnection,
         skip: i64,

@@ -16,3 +16,13 @@ export type ListVideoDTO = {
   uploader: string;
   uploaderId: string;
 };
+
+export type VideoDetailDTO = {
+  id: string;
+  title: string;
+  description: string;
+  path: string;
+  createdAt: string;
+  uploader: string;
+  uploaderId: string;
+};

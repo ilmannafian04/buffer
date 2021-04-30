@@ -13,7 +13,11 @@ pub fn configuration(cfg: &mut web::ServiceConfig) {
             .route("/comment", web::post().to(v::new_comment))
             .wrap(HttpAuthentication::bearer(auth_validator)),
     )
-    .service(web::scope("/api/video").route("", web::get().to(v::list_videos)))
+    .service(
+        web::scope("/api/video")
+            .route("", web::get().to(v::list_videos))
+            .route("/detail", web::get().to(v::video_detail)),
+    )
     .service(
         web::scope("/api/a/creator")
             .route("/follow", web::get().to(u::is_following))

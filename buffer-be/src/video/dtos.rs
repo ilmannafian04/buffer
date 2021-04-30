@@ -71,3 +71,30 @@ impl From<(Video, Option<User>)> for VideoListResponseDTO {
         }
     }
 }
+
+#[derive(Serialize)]
+pub struct VideoDetailDTO {
+    pub id: String,
+    pub title: String,
+    pub description: String,
+    pub path: String,
+    #[serde(rename = "createdAt")]
+    pub created_at: NaiveDateTime,
+    pub uploader: String,
+    #[serde(rename = "uploaderId")]
+    pub uploader_id: String,
+}
+
+impl From<(Video, User)> for VideoDetailDTO {
+    fn from(t: (Video, User)) -> Self {
+        Self {
+            id: t.0.id,
+            title: t.0.title,
+            description: t.0.description,
+            path: t.0.video_path,
+            created_at: t.0.created_at,
+            uploader: t.1.display_name,
+            uploader_id: t.1.id,
+        }
+    }
+}

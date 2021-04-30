@@ -7,13 +7,13 @@ use futures::TryStreamExt;
 use validator::Validate;
 
 use crate::{
-    common::{errors::DatabaseError, types::DbPool},
+    common::{dtos::IdQuery, errors::DatabaseError, types::DbPool},
     config::Config,
     user::models::User,
 };
 
 use super::{
-    dtos::{NewCommentDTO, NewVideoDTO, VideoListDTO, VideoListResponseDTO},
+    dtos::{NewCommentDTO, NewVideoDTO, VideoDetailDTO, VideoListDTO, VideoListResponseDTO},
     models::{NewComment, NewVideo, Video},
 };
 
@@ -129,5 +129,14 @@ pub async fn list_videos(pool: web::Data<DbPool>, query: web::Query<VideoListDTO
                 .collect::<Vec<VideoListResponseDTO>>(),
         ),
         Err(_) => return HttpResponse::InternalServerError().finish(),
+    }
+}
+
+pub async fn video_detail(pool: web::Data<DbPool>, query: web::Query<IdQuery>) -> HttpResponse {
+    let conn = pool.get().unwrap();
+    match web::block(move || Video::find_by_id_join_user(&conn, &query.id)).await {
+        Ok(t) => HttpResponse::Ok().json(VideoDetailDTO::from(t)),
+        Err(BlockingError::Error(Error::NotFound)) => return HttpResponse::NotFound().finish(),
+        _ => return HttpResponse::InternalServerError().finish(),
     }
 }

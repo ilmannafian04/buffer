@@ -11,3 +11,7 @@ export const uploadVideo = (data: FormData) => {
 export const listVideos = () => {
   return axios.get<ListVideoDTO[]>('/api/video');
 };
+
+export const getVideoDetail = (id: string) => {
+  return axios.get('/api/video/detail', { params: { id } });
+};
