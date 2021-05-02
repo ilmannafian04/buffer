@@ -26,7 +26,11 @@
   });
 </script>
 
-<div>video goes here</div>
+<vm-player controls>
+  <vm-video>
+    <source data-src={video.path} type="video/mp4" />
+  </vm-video>
+</vm-player>
 <div>
   <div class="is-size-4">{video.title}</div>
   <div class="creator-detail">
