@@ -26,3 +26,19 @@ export type VideoDetailDTO = {
   uploader: string;
   uploaderId: string;
 };
+
+export type CommentDTO = {
+  id: string;
+  content: string;
+  createdAt: string;
+  userId: string;
+  userDisplayName: string;
+};
+
+export type NewCommentDTO = {
+  id: string;
+  videoId: string;
+  userId: string;
+  content: string;
+  createdAt: string;
+};

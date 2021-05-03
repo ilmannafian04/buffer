@@ -7,8 +7,9 @@ use serde::Serialize;
 
 use crate::{
     common::models::ResolveMediaURL,
+    schema::comments::{self, dsl::comments as all_comments},
+    schema::users,
     schema::videos::{self, dsl::videos as all_videos},
-    schema::{comments, users},
     user::models::User,
 };
 
@@ -116,10 +117,27 @@ impl Default for NewVideo {
 #[belongs_to(User)]
 pub struct Comment {
     pub id: String,
+    #[serde(rename = "videoId")]
     pub video_id: String,
+    #[serde(rename = "userId")]
     pub user_id: String,
     pub content: String,
+    #[serde(rename = "createdAt")]
     pub created_at: NaiveDateTime,
+}
+
+impl Comment {
+    pub fn find_many_by_video_join_user(
+        conn: &PgConnection,
+        v_id: &str,
+    ) -> QueryResult<Vec<(Comment, Option<User>)>> {
+        use crate::schema::comments::dsl::{created_at, video_id};
+        all_comments
+            .filter(video_id.eq(v_id))
+            .left_outer_join(users::table)
+            .order_by(created_at.desc())
+            .get_results(conn)
+    }
 }
 
 #[derive(Debug, Insertable)]

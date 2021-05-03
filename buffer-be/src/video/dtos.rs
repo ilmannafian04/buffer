@@ -5,7 +5,7 @@ use validator::Validate;
 
 use crate::user::models::User;
 
-use super::models::Video;
+use super::models::{Comment, Video};
 
 #[derive(Deserialize)]
 pub struct NewVideoDTO {
@@ -15,6 +15,7 @@ pub struct NewVideoDTO {
 
 #[derive(Deserialize)]
 pub struct NewCommentDTO {
+    #[serde(rename = "videoId")]
     pub video_id: String,
     pub content: String,
 }
@@ -95,6 +96,32 @@ impl From<(Video, User)> for VideoDetailDTO {
             created_at: t.0.created_at,
             uploader: t.1.display_name,
             uploader_id: t.1.id,
+        }
+    }
+}
+
+#[derive(Serialize)]
+pub struct CommentDTO {
+    pub id: String,
+    pub content: String,
+    #[serde(rename = "createdAt")]
+    pub created_at: NaiveDateTime,
+    #[serde(rename = "userId")]
+    pub user_id: String,
+    #[serde(rename = "userDisplayName")]
+    pub user_display_name: String,
+}
+
+impl From<(Comment, Option<User>)> for CommentDTO {
+    fn from(tuple: (Comment, Option<User>)) -> Self {
+        let (c, u) = tuple;
+        let u = u.unwrap();
+        Self {
+            id: c.id,
+            content: c.content,
+            created_at: c.created_at,
+            user_id: u.id,
+            user_display_name: u.display_name,
         }
     }
 }

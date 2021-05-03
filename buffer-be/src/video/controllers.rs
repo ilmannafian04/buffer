@@ -13,8 +13,10 @@ use crate::{
 };
 
 use super::{
-    dtos::{NewCommentDTO, NewVideoDTO, VideoDetailDTO, VideoListDTO, VideoListResponseDTO},
-    models::{NewComment, NewVideo, Video},
+    dtos::{
+        CommentDTO, NewCommentDTO, NewVideoDTO, VideoDetailDTO, VideoListDTO, VideoListResponseDTO,
+    },
+    models::{Comment, NewComment, NewVideo, Video},
 };
 
 pub async fn upload_video(
@@ -178,6 +180,25 @@ pub async fn video_detail(
             HttpResponse::Ok().json(VideoDetailDTO::from(t))
         }
         Err(BlockingError::Error(Error::NotFound)) => return HttpResponse::NotFound().finish(),
+        _ => return HttpResponse::InternalServerError().finish(),
+    }
+}
+
+pub async fn video_comments(pool: web::Data<DbPool>, query: web::Query<IdQuery>) -> HttpResponse {
+    let conn = pool.get().unwrap();
+    let video = match web::block(move || Video::find_by_id(&conn, &query.id)).await {
+        Ok(v) => v,
+        Err(BlockingError::Error(Error::NotFound)) => return HttpResponse::NotFound().finish(),
+        _ => return HttpResponse::InternalServerError().finish(),
+    };
+    let conn = pool.get().unwrap();
+    match web::block(move || Comment::find_many_by_video_join_user(&conn, &video.id)).await {
+        Ok(tuples) => HttpResponse::Ok().json(
+            tuples
+                .into_iter()
+                .map(CommentDTO::from)
+                .collect::<Vec<CommentDTO>>(),
+        ),
         _ => return HttpResponse::InternalServerError().finish(),
     }
 }

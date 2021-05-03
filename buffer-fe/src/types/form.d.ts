@@ -14,3 +14,8 @@ export type UploadFormData = {
   title: string;
   description: string;
 };
+
+export type NewCommentData = {
+  videoId: string;
+  content: string;
+};

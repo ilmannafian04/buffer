@@ -3,6 +3,7 @@
   import { onMount } from 'svelte';
   import { Link } from 'svelte-routing';
 
+  import CommentSection from './CommentSection.svelte';
   import { getVideoDetail } from '../../api/videoApi';
   import type { VideoDetailDTO } from '../../types/dto';
 
@@ -42,6 +43,7 @@
     {video.description}
   </div>
 </div>
+<CommentSection videoId={video.id} />
 
 <style lang="postcss">
   .creator-detail {
