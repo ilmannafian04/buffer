@@ -1,5 +1,7 @@
 <script lang="ts">
   import axios from 'axios';
+  // noinspection TypeScriptCheckImport
+  import { Field, Input } from 'svelma';
   import { navigate } from 'svelte-routing';
 
   import type { SignUpFormData } from '../../types/form';
@@ -15,6 +17,7 @@
 
   const handleSubmit = () => {
     isSubmitting = true;
+    // noinspection TypeScriptUnresolvedFunction
     axios
       .post('/api/signup', formData)
       .then(() => {
@@ -26,11 +29,21 @@
   };
 </script>
 
-<h1>Sign up</h1>
+<div class="is-size-1 pb-2">Sign up</div>
 <form on:submit|preventDefault={handleSubmit}>
-  <input type="text" bind:value={formData.username} placeholder="username" disabled={isSubmitting} />
-  <input type="password" bind:value={formData.password} placeholder="password" disabled={isSubmitting} />
-  <input type="email" bind:value={formData.email} placeholder="email" disabled={isSubmitting} />
-  <input type="text" bind:value={formData.displayName} placeholder="displayName" disabled={isSubmitting} />
-  <button type="submit" disabled={isSubmitting}>Submit</button>
+  <Field label="Username">
+    <Input type="text" bind:value={formData.username} disabled={isSubmitting} />
+  </Field>
+  <Field label="Password">
+    <Input type="password" bind:value={formData.password} disabled={isSubmitting} />
+  </Field>
+  <Field label="Email">
+    <Input type="email" bind:value={formData.email} disabled={isSubmitting} />
+  </Field>
+  <Field label="Display name">
+    <Input type="text" bind:value={formData.displayName} disabled={isSubmitting} />
+  </Field>
+  <Field>
+    <div class="control"><button class="button is-primary" type="submit" disabled={isSubmitting}>Submit</button></div>
+  </Field>
 </form>

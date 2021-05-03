@@ -2,7 +2,7 @@
   import { AxiosResponse } from 'axios';
   // noinspection TypeScriptCheckImport
   import { Button, Field, Icon, Input } from 'svelma';
-  import { Link } from 'svelte-routing';
+  import { Link, navigate } from 'svelte-routing';
 
   import { getCommentsInVideo, newComment } from '../../api/videoApi';
   import { userState } from '../../store/authStore';
@@ -27,20 +27,24 @@
   }
 
   const submitHandler = () => {
-    newComment(commentData)
-      .then((value: AxiosResponse<NewCommentDTO>) => {
-        comments = [
-          {
-            content: value.data.content,
-            createdAt: value.data.createdAt,
-            id: value.data.id,
-            userDisplayName: $userState.user.displayName,
-            userId: $userState.user.id,
-          },
-          ...comments,
-        ];
-      })
-      .catch((err) => console.error(err));
+    if ($userState.signedIn) {
+      newComment(commentData)
+        .then((value: AxiosResponse<NewCommentDTO>) => {
+          comments = [
+            {
+              content: value.data.content,
+              createdAt: value.data.createdAt,
+              id: value.data.id,
+              userDisplayName: $userState.user.displayName,
+              userId: $userState.user.id,
+            },
+            ...comments,
+          ];
+        })
+        .catch((err) => console.error(err));
+    } else {
+      navigate('/signin');
+    }
   };
 </script>
 
