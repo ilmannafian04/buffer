@@ -53,6 +53,8 @@ pub struct VideoListDTO {
 pub struct VideoListResponseDTO {
     pub id: String,
     pub title: String,
+    #[serde(rename = "thumbnailPath")]
+    pub thumbnail_path: String,
     #[serde(rename = "createdAt")]
     pub created_at: NaiveDateTime,
     pub uploader: String,
@@ -62,13 +64,15 @@ pub struct VideoListResponseDTO {
 
 impl From<(Video, Option<User>)> for VideoListResponseDTO {
     fn from(tuple: (Video, Option<User>)) -> Self {
-        let user = tuple.1.unwrap();
+        let (v, u) = tuple;
+        let u = u.unwrap();
         Self {
-            id: tuple.0.id,
-            title: tuple.0.title,
-            created_at: tuple.0.created_at,
-            uploader: user.display_name,
-            uploader_id: user.id,
+            id: v.id,
+            title: v.title,
+            thumbnail_path: v.thumbnail_path,
+            created_at: v.created_at,
+            uploader: u.display_name,
+            uploader_id: u.id,
         }
     }
 }

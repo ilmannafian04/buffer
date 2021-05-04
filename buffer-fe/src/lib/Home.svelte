@@ -5,6 +5,7 @@
 
   import { listVideos } from '../api/videoApi';
   import type { ListVideoDTO } from '../types/dto';
+  import ListVideo from './components/ListVideo.svelte';
 
   let videos = [];
 
@@ -17,8 +18,17 @@
   });
 </script>
 
-<ul>
+<div class="is-size-1 pb-1">New Videos</div>
+<div class="listing">
   {#each videos as video (video.id)}
-    <li><Link to="/w/{video.id}">{video.title}</Link></li>
+    <ListVideo {video} />
   {/each}
-</ul>
+</div>
+
+<style lang="postcss">
+  .listing {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+</style>

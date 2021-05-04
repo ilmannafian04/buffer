@@ -12,6 +12,7 @@ export type CreatorProfileResponse = {
 export type ListVideoDTO = {
   id: string;
   title: string;
+  thumbnailPath: string;
   createdAt: string;
   uploader: string;
   uploaderId: string;
