@@ -13,6 +13,7 @@
     description: '',
     id: '',
     path: '',
+    thumbnailPath: '',
     title: '',
     uploader: '',
     uploaderId: '',
@@ -28,7 +29,7 @@
 </script>
 
 <vm-player controls>
-  <vm-video>
+  <vm-video poster={video.thumbnailPath}>
     <source data-src={video.path} type="video/mp4" />
   </vm-video>
 </vm-player>

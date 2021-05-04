@@ -79,6 +79,8 @@ pub struct VideoDetailDTO {
     pub title: String,
     pub description: String,
     pub path: String,
+    #[serde(rename = "thumbnailPath")]
+    pub thumbnaail_path: String,
     #[serde(rename = "createdAt")]
     pub created_at: NaiveDateTime,
     pub uploader: String,
@@ -88,14 +90,16 @@ pub struct VideoDetailDTO {
 
 impl From<(Video, User)> for VideoDetailDTO {
     fn from(t: (Video, User)) -> Self {
+        let (v, u) = t;
         Self {
-            id: t.0.id,
-            title: t.0.title,
-            description: t.0.description,
-            path: t.0.video_path,
-            created_at: t.0.created_at,
-            uploader: t.1.display_name,
-            uploader_id: t.1.id,
+            id: v.id,
+            title: v.title,
+            description: v.description,
+            path: v.video_path,
+            thumbnaail_path: v.thumbnail_path,
+            created_at: v.created_at,
+            uploader: u.display_name,
+            uploader_id: u.id,
         }
     }
 }

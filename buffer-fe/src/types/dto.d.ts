@@ -22,6 +22,7 @@ export type VideoDetailDTO = {
   title: string;
   description: string;
   path: string;
+  thumbnailPath: string;
   createdAt: string;
   uploader: string;
   uploaderId: string;

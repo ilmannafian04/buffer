@@ -62,7 +62,7 @@ impl ResolveMediaURL for Video {
         self.video_path.remove(0);
         self.video_path = base.join(&self.video_path).unwrap().to_string();
         self.thumbnail_path.remove(0);
-        self.thumbnail_path = base.join(&self.video_path).unwrap().to_string();
+        self.thumbnail_path = base.join(&self.thumbnail_path).unwrap().to_string();
     }
 }
 
