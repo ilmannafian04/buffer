@@ -43,11 +43,15 @@
     {video.description}
   </div>
 </div>
+<hr class="divider" />
 <CommentSection videoId={video.id} />
 
 <style lang="postcss">
   .creator-detail {
     display: flex;
     align-items: center;
+  }
+  .divider {
+    border-top: 1px solid #bbb;
   }
 </style>

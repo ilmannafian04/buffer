@@ -7,7 +7,12 @@ use futures::TryStreamExt;
 use validator::Validate;
 
 use crate::{
-    common::{dtos::IdQuery, errors::DatabaseError, models::ResolveMediaURL, types::DbPool},
+    common::{
+        dtos::{IdQuery, IndexRequestDTO},
+        errors::DatabaseError,
+        models::ResolveMediaURL,
+        types::DbPool,
+    },
     config::Config,
     user::models::User,
 };
@@ -184,9 +189,13 @@ pub async fn video_detail(
     }
 }
 
-pub async fn video_comments(pool: web::Data<DbPool>, query: web::Query<IdQuery>) -> HttpResponse {
+pub async fn video_comments(
+    pool: web::Data<DbPool>,
+    query: web::Query<IndexRequestDTO>,
+) -> HttpResponse {
     let conn = pool.get().unwrap();
-    let video = match web::block(move || Video::find_by_id(&conn, &query.id)).await {
+    let id_closure = query.id.clone();
+    let video = match web::block(move || Video::find_by_id(&conn, &id_closure)).await {
         Ok(v) => v,
         Err(BlockingError::Error(Error::NotFound)) => return HttpResponse::NotFound().finish(),
         _ => return HttpResponse::InternalServerError().finish(),
