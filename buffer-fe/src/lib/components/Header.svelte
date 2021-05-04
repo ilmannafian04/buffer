@@ -21,6 +21,12 @@
       path: '/',
     },
   ];
+  if ($userState.signedIn) {
+    navs.push({
+      name: 'Upload',
+      path: '/upload',
+    });
+  }
 </script>
 
 <nav class="navbar" role="navigation">

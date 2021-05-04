@@ -37,6 +37,8 @@
   .thumbnail {
     width: 320px;
     height: 180px;
+    object-fit: cover;
+    object-position: 100% 0;
   }
 
   .extras {
