@@ -133,3 +133,10 @@ impl From<(Comment, Option<User>)> for CommentDTO {
         }
     }
 }
+
+#[derive(Deserialize)]
+pub struct RateVideoRequest {
+    pub id: String,
+    #[serde(rename = "isDislike")]
+    pub is_dislike: bool,
+}

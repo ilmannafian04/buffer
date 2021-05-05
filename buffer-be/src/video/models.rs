@@ -8,6 +8,7 @@ use serde::Serialize;
 use crate::{
     common::models::ResolveMediaURL,
     schema::comments::{self, dsl::comments as all_comments},
+    schema::ratings::{self, dsl::ratings as all_ratings},
     schema::users,
     schema::videos::{self, dsl::videos as all_videos},
     user::models::User,
@@ -163,5 +164,44 @@ impl Default for NewComment {
             user_id: "".to_owned(),
             content: "".to_owned(),
         }
+    }
+}
+
+#[derive(Associations, Identifiable, Insertable, Queryable)]
+#[belongs_to(Video)]
+#[belongs_to(User)]
+#[primary_key(video_id, user_id)]
+pub struct Rating {
+    pub video_id: String,
+    pub user_id: String,
+    pub is_dislike: bool,
+}
+
+impl Rating {
+    pub fn insert(self, conn: &PgConnection) -> QueryResult<Rating> {
+        self.insert_into(ratings::table).get_result(conn)
+    }
+
+    pub fn update(self, conn: &PgConnection, is_d: bool) -> QueryResult<Rating> {
+        use crate::schema::ratings::dsl::{is_dislike, user_id, video_id};
+        diesel::update(
+            all_ratings
+                .filter(video_id.eq(&self.video_id))
+                .filter(user_id.eq(&self.user_id)),
+        )
+        .set(is_dislike.eq(is_d))
+        .get_result(conn)
+    }
+
+    pub fn find_by_video_and_user(
+        conn: &PgConnection,
+        v_id: &str,
+        u_id: &str,
+    ) -> QueryResult<Rating> {
+        use crate::schema::ratings::dsl::{user_id, video_id};
+        all_ratings
+            .filter(video_id.eq(v_id))
+            .filter(user_id.eq(u_id))
+            .get_result(conn)
     }
 }

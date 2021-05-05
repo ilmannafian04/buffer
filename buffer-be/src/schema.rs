@@ -23,6 +23,14 @@ table! {
 }
 
 table! {
+    ratings (video_id, user_id) {
+        video_id -> Varchar,
+        user_id -> Varchar,
+        is_dislike -> Bool,
+    }
+}
+
+table! {
     users (id) {
         id -> Varchar,
         email -> Varchar,
@@ -56,6 +64,7 @@ allow_tables_to_appear_in_same_query!(
     comments,
     creators,
     followers,
+    ratings,
     users,
     videos,
 );

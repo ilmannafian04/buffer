@@ -19,9 +19,10 @@ use crate::{
 
 use super::{
     dtos::{
-        CommentDTO, NewCommentDTO, NewVideoDTO, VideoDetailDTO, VideoListDTO, VideoListResponseDTO,
+        CommentDTO, NewCommentDTO, NewVideoDTO, RateVideoRequest, VideoDetailDTO, VideoListDTO,
+        VideoListResponseDTO,
     },
-    models::{Comment, NewComment, NewVideo, Video},
+    models::{Comment, NewComment, NewVideo, Rating, Video},
 };
 
 pub async fn upload_video(
@@ -209,5 +210,47 @@ pub async fn video_comments(
                 .collect::<Vec<CommentDTO>>(),
         ),
         _ => return HttpResponse::InternalServerError().finish(),
+    }
+}
+
+pub async fn rate_video(
+    pool: web::Data<DbPool>,
+    payload: web::Json<RateVideoRequest>,
+    req: HttpRequest,
+) -> HttpResponse {
+    let extension = req.head().extensions();
+    let user = extension.get::<User>().unwrap();
+    let conn = pool.get().unwrap();
+    let id_closure = payload.id.clone();
+    let video = match web::block(move || Video::find_by_id(&conn, &id_closure)).await {
+        Ok(v) => v,
+        Err(BlockingError::Error(Error::NotFound)) => return HttpResponse::NotFound().finish(),
+        _ => return HttpResponse::InternalServerError().finish(),
+    };
+    let conn = pool.get().unwrap();
+    let param = (video.id.clone(), user.id.clone());
+    match web::block(move || Rating::find_by_video_and_user(&conn, &param.0, &param.1)).await {
+        Ok(rating) => {
+            if rating.is_dislike != payload.is_dislike {
+                let conn = pool.get().unwrap();
+                if let Err(_) = web::block(move || rating.update(&conn, payload.is_dislike)).await {
+                    return HttpResponse::InternalServerError().finish();
+                }
+            }
+            HttpResponse::Ok().finish()
+        }
+        Err(BlockingError::Error(Error::NotFound)) => {
+            let rating = Rating {
+                video_id: video.id.clone(),
+                user_id: user.id.clone(),
+                is_dislike: payload.is_dislike,
+            };
+            let conn = pool.get().unwrap();
+            match web::block(move || rating.insert(&conn)).await {
+                Ok(_) => HttpResponse::Ok().finish(),
+                _ => HttpResponse::InternalServerError().finish(),
+            }
+        }
+        _ => HttpResponse::InternalServerError().finish(),
     }
 }
