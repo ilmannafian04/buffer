@@ -9,6 +9,7 @@
   import { getVideoDetail, getVideoRating, hasRated, rateVideo } from '../../api/videoApi';
   import { userState } from '../../store/authStore';
   import type { HasRatedDTO, VideoDetailDTO, VideoRatingDTO } from '../../types/dto';
+  import ShareToTwitter from '../components/ShareToTwitter.svelte';
 
   export let videoId;
   let date = '';
@@ -95,7 +96,8 @@
   <div class="is-size-4">{video.title}</div>
   <div class="creator-detail">
     <div><Link to="/c/{video.uploader}">{video.uploader}</Link> uploaded on {date}</div>
-    <div class="rating">
+    <div class="info-right">
+      <ShareToTwitter title={video.title} />
       <div class="rating-button" class:has-text-primary={userHasRated.hasRated && !userHasRated.isDislike}>
         <Icon pack="fa" size="is-medium" icon="thumbs-up" on:click={() => ratingHandler(false)} />
       </div>
@@ -121,7 +123,7 @@
   .divider {
     border-top: 1px solid #bbb;
   }
-  .rating {
+  .info-right {
     display: flex;
     align-items: center;
   }
