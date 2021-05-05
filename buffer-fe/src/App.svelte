@@ -13,6 +13,7 @@
   import Profile from './lib/creator/Profile.svelte';
   import Watch from './lib/video/Watch.svelte';
   import Upload from './lib/video/Upload.svelte';
+  import Account from './lib/creator/Account.svelte';
 
   onMount(() => {
     let jwt = localStorage.getItem('jwt');
@@ -39,6 +40,9 @@
     </Route>
     <Route path="/upload">
       <Upload />
+    </Route>
+    <Route path="/account">
+      <Account />
     </Route>
     <Route path="/c/:displayName" let:params>
       <Profile displayName={params.displayName} />

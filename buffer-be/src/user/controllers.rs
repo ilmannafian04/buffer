@@ -9,7 +9,8 @@ use crate::{
 
 use super::{
     dtos::{
-        CreatorLookUpDTO, CreatorProfileResponseDTO, IsFollowingResponseDTO, JWTResponse, SignInDTO,
+        CreatorLookUpDTO, CreatorProfileResponseDTO, IsFollowingResponseDTO, JWTResponse,
+        SignInDTO, UpdateProfileDTO,
     },
     models::{Creator, Follower, NewFollower, NewUser, UniqueViolationKind, User},
 };
@@ -212,6 +213,31 @@ pub async fn is_following(
             HttpResponse::Ok().json(IsFollowingResponseDTO {
                 is_following: false,
             })
+        }
+        _ => HttpResponse::InternalServerError().finish(),
+    }
+}
+
+pub async fn update_profile(
+    req: HttpRequest,
+    pool: web::Data<DbPool>,
+    payload: web::Json<UpdateProfileDTO>,
+) -> HttpResponse {
+    if let Err(_) = payload.validate() {
+        return HttpResponse::BadRequest().finish();
+    };
+    let ext = req.head().extensions();
+    let user = ext.get::<User>().unwrap();
+    let conn = pool.get().unwrap();
+    let id_closure = user.id.clone();
+    match web::block(move || {
+        User::update(&conn, &id_closure, &payload.email, &payload.display_name)
+    })
+    .await
+    {
+        Ok(_) => HttpResponse::Ok().finish(),
+        Err(BlockingError::Error(Error::DatabaseError(DatabaseErrorKind::UniqueViolation, _))) => {
+            HttpResponse::BadRequest().finish()
         }
         _ => HttpResponse::InternalServerError().finish(),
     }

@@ -26,6 +26,7 @@ pub fn configuration(cfg: &mut web::ServiceConfig) {
             .route("/follow", web::get().to(u::is_following))
             .route("/follow", web::post().to(u::follow))
             .route("/unfollow", web::post().to(u::unfollow))
+            .route("/profile", web::post().to(u::update_profile))
             .wrap(HttpAuthentication::bearer(auth_validator)),
     )
     .service(web::scope("/api/creator").route("", web::get().to(u::creator_profile)))

@@ -19,3 +19,8 @@ export type NewCommentData = {
   videoId: string;
   content: string;
 };
+
+export type UpdateProfileData = {
+  email: string;
+  displayName: string;
+};

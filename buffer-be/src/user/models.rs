@@ -18,7 +18,7 @@ pub enum UniqueViolationKind {
     Username,
 }
 
-#[derive(Debug, Identifiable, Queryable, Serialize)]
+#[derive(Identifiable, Queryable, Serialize)]
 pub struct User {
     pub id: String,
     pub email: String,
@@ -64,6 +64,18 @@ impl User {
     pub fn find_by_display_name(conn: &PgConnection, d_name: &String) -> QueryResult<User> {
         use crate::schema::users::dsl::display_name;
         all_users.filter(display_name.eq(d_name)).first(conn)
+    }
+
+    pub fn update(
+        conn: &PgConnection,
+        u_id: &str,
+        e_mail: &str,
+        d_name: &str,
+    ) -> QueryResult<User> {
+        use crate::schema::users::dsl::{display_name, email, id};
+        diesel::update(all_users.filter(id.eq(u_id)))
+            .set((email.eq(&e_mail), display_name.eq(&d_name)))
+            .get_result(conn)
     }
 }
 

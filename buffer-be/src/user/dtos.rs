@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use validator::Validate;
 
 use super::models::User;
 
@@ -30,4 +31,13 @@ pub struct CreatorProfileResponseDTO {
 pub struct IsFollowingResponseDTO {
     #[serde(rename = "isFollowing")]
     pub is_following: bool,
+}
+
+#[derive(Deserialize, Validate)]
+pub struct UpdateProfileDTO {
+    #[validate(email)]
+    pub email: String,
+    #[serde(rename = "displayName")]
+    #[validate(length(min = 1))]
+    pub display_name: String,
 }

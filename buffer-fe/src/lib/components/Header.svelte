@@ -1,7 +1,7 @@
 <script lang="ts">
   // noinspection TypeScriptCheckImport
   import { Icon } from 'svelma';
-  import { link } from 'svelte-routing';
+  import { link, navigate } from 'svelte-routing';
   import { userState } from '../../store/authStore';
   import { logout } from '../../util/authUtil';
 
@@ -21,11 +21,13 @@
       path: '/',
     },
   ];
-  if ($userState.signedIn) {
-    navs.push({
-      name: 'Upload',
-      path: '/upload',
-    });
+  $: {
+    if ($userState.signedIn) {
+      navs.push({
+        name: 'Upload',
+        path: '/upload',
+      });
+    }
   }
 </script>
 
@@ -59,7 +61,9 @@
             <Icon pack="fas" icon="user-circle" size="is-medium" />
           </a>
           <div class="navbar-dropdown is-right">
-            <a class="navbar-item">{$userState.user.displayName}</a>
+            <a class="navbar-item" on:click|preventDefault={() => navigate('/account')}>
+              {$userState.user.displayName}
+            </a>
             <hr class="navbar-divider" />
             <a class="navbar-item" on:click|preventDefault={logoutHandler}>Logout</a>
           </div>
