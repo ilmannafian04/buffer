@@ -26,3 +26,7 @@ export const newComment = (data: NewCommentData) => {
   config.headers['Content-Type'] = 'application/json';
   return axios.post('/api/a/video/comment', data, config);
 };
+
+export const rateVideo = (id: string, isDislike = false) => {
+  return axios.post('/api/a/video/rate', { id, isDislike }, authenticatedConfig());
+};

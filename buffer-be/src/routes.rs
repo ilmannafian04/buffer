@@ -11,7 +11,7 @@ pub fn configuration(cfg: &mut web::ServiceConfig) {
         web::scope("/api/a/video")
             .route("/", web::post().to(v::upload_video))
             .route("/comment", web::post().to(v::new_comment))
-            .route("/path", web::post().to(v::rate_video))
+            .route("/rate", web::post().to(v::rate_video))
             .wrap(HttpAuthentication::bearer(auth_validator)),
     )
     .service(

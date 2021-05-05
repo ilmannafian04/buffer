@@ -29,7 +29,7 @@
 </script>
 
 <Header />
-<div class="container">
+<div class="container mb-2">
   <Router url={''}>
     <Route path="/signup">
       <Signup />

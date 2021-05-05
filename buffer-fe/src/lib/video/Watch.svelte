@@ -1,13 +1,16 @@
 <script lang="ts">
   import type { AxiosResponse } from 'axios';
+  // noinspection TypeScriptCheckImport
+  import { Icon } from 'svelma';
   import { onMount } from 'svelte';
   import { Link } from 'svelte-routing';
 
   import CommentSection from './CommentSection.svelte';
-  import { getVideoDetail } from '../../api/videoApi';
+  import { getVideoDetail, rateVideo } from '../../api/videoApi';
   import type { VideoDetailDTO } from '../../types/dto';
 
   export let videoId;
+  let date = '';
   let video: VideoDetailDTO = {
     createdAt: '',
     description: '',
@@ -18,6 +21,20 @@
     uploader: '',
     uploaderId: '',
   };
+  const ratingHandler = (dislike: boolean) => {
+    if (videoId) {
+      rateVideo(videoId, dislike)
+        .then(() => {})
+        .catch((err) => console.error(err));
+    }
+  };
+
+  $: {
+    if (video.createdAt !== '') {
+      let dateObj = new Date(video.createdAt);
+      date = dateObj.toDateString();
+    }
+  }
 
   onMount(() => {
     getVideoDetail(videoId)
@@ -36,9 +53,15 @@
 <div>
   <div class="is-size-4">{video.title}</div>
   <div class="creator-detail">
-    <span class="is-size-4">🧑</span>
-    <Link to="/c/{video.uploader}">{video.uploader}</Link>
-    <span>Uploaded on {video.createdAt}</span>
+    <div><Link to="/c/{video.uploader}">{video.uploader}</Link> uploaded on {date}</div>
+    <div class="rating">
+      <div class="rating-button">
+        <Icon pack="fa" size="is-medium" icon="thumbs-up" on:click={() => ratingHandler(false)} />
+      </div>
+      <div class="rating-button">
+        <Icon pack="fa" size="is-medium" icon="thumbs-down" on:click={() => ratingHandler(true)} />
+      </div>
+    </div>
   </div>
   <div>
     {video.description}
@@ -51,8 +74,15 @@
   .creator-detail {
     display: flex;
     align-items: center;
+    justify-content: space-between;
   }
   .divider {
     border-top: 1px solid #bbb;
+  }
+  .rating {
+    display: flex;
+  }
+  .rating-button {
+    cursor: pointer;
   }
 </style>
