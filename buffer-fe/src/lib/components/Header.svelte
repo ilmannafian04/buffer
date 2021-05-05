@@ -1,12 +1,13 @@
 <script lang="ts">
   // noinspection TypeScriptCheckImport
-  import { Icon } from 'svelma';
+  import { Icon, Field, Input } from 'svelma';
   import { link, navigate } from 'svelte-routing';
   import { userState } from '../../store/authStore';
   import { logout } from '../../util/authUtil';
 
   let menuIsOpen = false;
   let accountIsOpen = false;
+  let searchTerm = '';
   const toggleMenu = () => (menuIsOpen = !menuIsOpen);
   const closeMenu = () => (menuIsOpen = false);
   const toggleAccount = () => (accountIsOpen = !accountIsOpen);
@@ -33,6 +34,9 @@
   } else {
     navs = pubNavs;
   }
+  const searchHandler = () => {
+    navigate(`/search/${searchTerm}`);
+  };
 </script>
 
 <nav class="navbar" role="navigation">
@@ -51,13 +55,22 @@
       {/each}
     </a>
   </div>
-  <div class={menuIsOpen ? 'navbar-menu is-active' : 'navbar-menu'}>
+  <div class="navbar-menu nav-root" class:is-active={menuIsOpen}>
     <div class="navbar-start">
       {#each navs as navLink (navLink.path)}
         <a class="navbar-item" on:click={closeMenu} use:link href={navLink.path}>{navLink.name}</a>
       {/each}
     </div>
-
+    <form on:submit|preventDefault={searchHandler}>
+      <div class="field has-addons">
+        <div class="control">
+          <input class="is-rounded input is-primary" placeholder="Search videos" bind:value={searchTerm} />
+        </div>
+        <div class="control">
+          <button type="submit" class="button is-primary is-rounded">Search</button>
+        </div>
+      </div>
+    </form>
     <div class="navbar-end">
       {#if $userState.signedIn}
         <div class={`navbar-item has-dropdown ${accountIsOpen ? 'is-active' : ''}`} on:click={toggleAccount}>
@@ -85,3 +98,10 @@
     </div>
   </div>
 </nav>
+
+<style lang="postcss">
+  .nav-root {
+    display: flex;
+    align-items: center;
+  }
+</style>
