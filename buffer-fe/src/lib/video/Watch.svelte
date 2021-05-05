@@ -112,7 +112,7 @@
   </div>
 </div>
 <hr class="divider" />
-<CommentSection videoId={video.id} />
+<CommentSection {videoId} />
 
 <style lang="postcss">
   .creator-detail {
