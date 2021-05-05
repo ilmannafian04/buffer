@@ -8,6 +8,7 @@
   import { userState } from '../../store/authStore';
   import type { CommentDTO, NewCommentDTO } from '../../types/dto';
   import type { NewCommentData } from '../../types/form';
+  import { parseDate } from '../../util/stringUtil';
 
   export let videoId: string;
   let isSubmitting = false;
@@ -72,7 +73,7 @@
         <div>
           <div>
             <Link to="/c/{comment.userDisplayName}">{comment.userDisplayName}</Link>
-            {comment.createdAt}
+            on {parseDate(comment.createdAt)}
           </div>
           <span>{comment.content}</span>
         </div>
