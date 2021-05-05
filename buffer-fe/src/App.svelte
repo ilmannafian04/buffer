@@ -10,6 +10,10 @@
   import Home from './lib/Home.svelte';
   import { userState } from './store/authStore';
   import Header from './lib/components/Header.svelte';
+  import Profile from './lib/creator/Profile.svelte';
+  import Watch from './lib/video/Watch.svelte';
+  import Upload from './lib/video/Upload.svelte';
+  import Account from './lib/creator/Account.svelte';
 
   onMount(() => {
     let jwt = localStorage.getItem('jwt');
@@ -26,14 +30,28 @@
 </script>
 
 <Header />
-<Router url={''}>
-  <Route path="/signup">
-    <Signup />
-  </Route>
-  <Route path="/signin">
-    <Signin />
-  </Route>
-  <Route path="/">
-    <Home />
-  </Route>
-</Router>
+<div class="container mb-2">
+  <Router url={''}>
+    <Route path="/signup">
+      <Signup />
+    </Route>
+    <Route path="/signin">
+      <Signin />
+    </Route>
+    <Route path="/upload">
+      <Upload />
+    </Route>
+    <Route path="/account">
+      <Account />
+    </Route>
+    <Route path="/c/:displayName" let:params>
+      <Profile displayName={params.displayName} />
+    </Route>
+    <Route path="/w/:videoId" let:params>
+      <Watch videoId={params.videoId} />
+    </Route>
+    <Route path="/">
+      <Home />
+    </Route>
+  </Router>
+</div>

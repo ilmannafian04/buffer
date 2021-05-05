@@ -1,5 +1,7 @@
 <script lang="ts">
   import axios, { AxiosResponse } from 'axios';
+  // noinspection TypeScriptCheckImport
+  import { Field, Input } from 'svelma';
 
   import { getAccount } from '../../api/userApi';
   import { userState } from '../../store/authStore';
@@ -14,6 +16,7 @@
   let formData = initialData;
 
   const submitHandler = () => {
+    // noinspection TypeScriptUnresolvedFunction
     axios
       .post('/api/signin', formData)
       .then((value: AxiosResponse<SignInResponse>) => {
@@ -33,9 +36,15 @@
   };
 </script>
 
-<h1>Signin</h1>
+<div class="is-size-1 pb-2">Sign in</div>
 <form on:submit|preventDefault={submitHandler}>
-  <input type="text" bind:value={formData.username} disabled={isSubmitting} />
-  <input type="password" bind:value={formData.password} disabled={isSubmitting} />
-  <button type="submit" disabled={isSubmitting}>Submit</button>
+  <Field label="Username">
+    <Input type="text" bind:value={formData.username} disabled={isSubmitting} />
+  </Field>
+  <Field label="Password">
+    <Input type="password" bind:value={formData.password} disabled={isSubmitting} />
+  </Field>
+  <Field>
+    <button class="button is-primary" type="submit" disabled={isSubmitting}>Submit</button>
+  </Field>
 </form>
