@@ -15,19 +15,23 @@
     closeMenu();
     accountIsOpen = false;
   };
-  const navs: { name: string; path: string }[] = [
+  let navs;
+  const pubNavs = [
     {
       name: 'Home',
       path: '/',
     },
   ];
-  $: {
-    if ($userState.signedIn) {
-      navs.push({
-        name: 'Upload',
-        path: '/upload',
-      });
-    }
+  const authedNavs = [
+    {
+      name: 'Upload',
+      path: '/upload',
+    },
+  ];
+  $: if ($userState.signedIn) {
+    navs = [...pubNavs, ...authedNavs];
+  } else {
+    navs = pubNavs;
   }
 </script>
 

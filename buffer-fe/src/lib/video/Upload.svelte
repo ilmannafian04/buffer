@@ -1,12 +1,15 @@
 <script lang="ts">
   // noinspection TypeScriptCheckImport
   import { Field, Input, Button } from 'svelma';
+  // noinspection TypeScriptCheckImport
+  import Dropzone from 'svelte-file-dropzone';
   import { navigate } from 'svelte-routing';
 
   import type { UploadFormData } from '../../types/form';
   import { uploadVideo } from '../../api/videoApi';
 
   let isUploading = false;
+  let isValid = false;
   let formData: UploadFormData = {
     description: '',
     title: '',
@@ -27,9 +30,25 @@
       .catch((err) => console.error(err))
       .finally(() => (isUploading = false));
   };
+  const dropHandler = (e) => {
+    e.detail.acceptedFiles.forEach((currentFile) => {
+      if (currentFile.type === 'video/mp4') {
+        video = [currentFile];
+      } else {
+        thumbnail = [currentFile];
+      }
+    });
+  };
+  $: {
+    let valid = true;
+    if (formData.title.length === 0) valid = false;
+    if (video === undefined) valid = false;
+    if (thumbnail === undefined) valid = false;
+    isValid = valid;
+  }
 </script>
 
-<form on:submit|preventDefault={submitHandler}>
+<form>
   <Field label="Title">
     <Input type="text" bind:value={formData.title} />
   </Field>
@@ -37,48 +56,23 @@
     <Input type="textarea" bind:value={formData.description} />
   </Field>
   <Field>
-    <div class="file has-name">
-      <label class="file-label">
-        <input class="file-input" type="file" bind:files={video} accept="video/*" />
-        <span class="file-cta">
-          <span class="file-icon">
-            <!--suppress CheckEmptyScriptTag -->
-            <i class="fas fa-upload" />
-          </span>
-          <span class="file-label"> Choose a video… </span>
-        </span>
-        <span class="file-name">
-          {video ? video[0].name : 'Video'}
-        </span>
-      </label>
-    </div>
+    <Dropzone accept={['video/mp4', 'image/png']} on:drop={dropHandler}>
+      <span>{video ? `Selected video: ${video[0].name}` : 'Select a video'}</span>
+      <span>{thumbnail ? `Selected thumbnail: ${thumbnail[0].name}` : 'Select a thumbnail'}</span>
+    </Dropzone>
   </Field>
   <Field>
-    <div class="file has-name">
-      <label class="file-label">
-        <input class="file-input" type="file" bind:files={thumbnail} accept="image/*" />
-        <span class="file-cta">
-          <span class="file-icon">
-            <!--suppress CheckEmptyScriptTag -->
-            <i class="fas fa-upload" />
-          </span>
-          <span class="file-label"> Choose a thumbnail… </span>
-        </span>
-        <span class="file-name">
-          {thumbnail ? thumbnail[0].name : 'Thumbnail'}
-        </span>
-      </label>
+    <div class="control">
+      <Button loading={isUploading} type="is-primary" on:click={submitHandler} disabled={!isValid}>Upload</Button>
     </div>
-  </Field>
-  <Field>
-    {#if isUploading}
-      <div class="control">
-        <Button loading type="is-primary">Upload</Button>
-      </div>
-    {:else}
-      <div class="control">
-        <button type="submit" class="button is-primary">Upload</button>
-      </div>
-    {/if}
+    <!--{#if isUploading}-->
+    <!--  <div class="control">-->
+    <!--    <Button loading type="is-primary">Upload</Button>-->
+    <!--  </div>-->
+    <!--{:else}-->
+    <!--  <div class="control">-->
+    <!--    <button type="submit" class="button is-primary">Upload</button>-->
+    <!--  </div>-->
+    <!--{/if}-->
   </Field>
 </form>
