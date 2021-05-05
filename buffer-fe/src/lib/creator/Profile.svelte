@@ -1,14 +1,18 @@
 <script lang="ts">
+  import type { AxiosResponse } from 'axios';
   // noinspection TypeScriptCheckImport
   import { Button, Icon } from 'svelma';
   import { onMount } from 'svelte';
   import { navigate } from 'svelte-routing';
 
-  import type { CreatorProfileResponse } from '../../types/dto';
-  import { userState } from '../../store/authStore';
+  import ListVideo from '../components/ListVideo.svelte';
   import { creatorProfile, follow, isFollowing, unfollow } from '../../api/creatorApi';
+  import { getVideoByCreator } from '../../api/userApi';
+  import { userState } from '../../store/authStore';
+  import type { CreatorProfileResponse, VideoDetailDTO } from '../../types/dto';
 
   export let displayName;
+  let videos: VideoDetailDTO[] = [];
   let profile: CreatorProfileResponse = {
     creator: {
       id: '',
@@ -24,12 +28,15 @@
     creatorProfile(displayName)
       .then((value) => {
         profile = value.data;
-        return isFollowing(displayName);
+        return getVideoByCreator(displayName);
       })
-      .then((value) => {
-        following = value.data.isFollowing;
-      })
+      .then((value: AxiosResponse<VideoDetailDTO[]>) => (videos = value.data))
       .catch((err) => console.error(err));
+    if ($userState.signedIn) {
+      isFollowing(displayName)
+        .then((value: AxiosResponse<{ isFollowing: boolean }>) => (following = value.data.isFollowing))
+        .catch((err) => console.error(err));
+    }
   });
 
   let followHandler = () => {
@@ -55,7 +62,7 @@
   };
 </script>
 
-<div class="name-section">
+<div class="name-section pb-2">
   <div class="is-size-1 pr-5">
     <Icon pack="fas" icon="user-circle" size="is-medium" />
     &nbsp;{profile.creator.displayName}
@@ -63,10 +70,20 @@
   <span class="pr-2">{profile.followerCount} followers</span>
   <Button on:click={followHandler}>{following ? 'Followed' : 'Follow'}</Button>
 </div>
+<div class="video-section">
+  {#each videos as video (video.id)}
+    <div class="pr-4 pb-2"><ListVideo {video} /></div>
+  {/each}
+</div>
 
 <style lang="postcss">
   .name-section {
     display: flex;
     align-items: center;
+  }
+
+  .video-section {
+    display: flex;
+    flex-wrap: wrap;
   }
 </style>

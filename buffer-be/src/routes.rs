@@ -30,7 +30,11 @@ pub fn configuration(cfg: &mut web::ServiceConfig) {
             .route("/profile", web::post().to(u::update_profile))
             .wrap(HttpAuthentication::bearer(auth_validator)),
     )
-    .service(web::scope("/api/creator").route("", web::get().to(u::creator_profile)))
+    .service(
+        web::scope("/api/creator")
+            .route("", web::get().to(u::creator_profile))
+            .route("/videos", web::get().to(v::creator_videos)),
+    )
     .service(
         web::scope("/api/auth")
             .route("/ping", web::get().to(c::ping))
