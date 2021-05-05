@@ -6,8 +6,8 @@
   import { Link } from 'svelte-routing';
 
   import CommentSection from './CommentSection.svelte';
-  import { getVideoDetail, rateVideo } from '../../api/videoApi';
-  import type { VideoDetailDTO } from '../../types/dto';
+  import { getVideoDetail, getVideoRating, rateVideo } from '../../api/videoApi';
+  import type { VideoDetailDTO, VideoRatingDTO } from '../../types/dto';
 
   export let videoId;
   let date = '';
@@ -21,10 +21,22 @@
     uploader: '',
     uploaderId: '',
   };
+  let rating = {
+    like: 0,
+    dislike: 0,
+  };
   const ratingHandler = (dislike: boolean) => {
     if (videoId) {
       rateVideo(videoId, dislike)
-        .then(() => {})
+        .then(() => {
+          if (dislike) {
+            rating.dislike++;
+            rating.like--;
+          } else {
+            rating.like++;
+            rating.dislike--;
+          }
+        })
         .catch((err) => console.error(err));
     }
   };
@@ -40,7 +52,9 @@
     getVideoDetail(videoId)
       .then((value: AxiosResponse<VideoDetailDTO>) => {
         video = value.data;
+        return getVideoRating(videoId);
       })
+      .then((value: AxiosResponse<VideoRatingDTO>) => (rating = value.data))
       .catch((err) => console.error(err));
   });
 </script>
@@ -58,6 +72,7 @@
       <div class="rating-button">
         <Icon pack="fa" size="is-medium" icon="thumbs-up" on:click={() => ratingHandler(false)} />
       </div>
+      {rating.like}/{rating.dislike}
       <div class="rating-button">
         <Icon pack="fa" size="is-medium" icon="thumbs-down" on:click={() => ratingHandler(true)} />
       </div>
@@ -81,6 +96,7 @@
   }
   .rating {
     display: flex;
+    align-items: center;
   }
   .rating-button {
     cursor: pointer;

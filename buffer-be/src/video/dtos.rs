@@ -140,3 +140,9 @@ pub struct RateVideoRequest {
     #[serde(rename = "isDislike")]
     pub is_dislike: bool,
 }
+
+#[derive(Serialize)]
+pub struct VideoRatingDTO {
+    pub like: i64,
+    pub dislike: i64,
+}

@@ -20,7 +20,7 @@ use crate::{
 use super::{
     dtos::{
         CommentDTO, NewCommentDTO, NewVideoDTO, RateVideoRequest, VideoDetailDTO, VideoListDTO,
-        VideoListResponseDTO,
+        VideoListResponseDTO, VideoRatingDTO,
     },
     models::{Comment, NewComment, NewVideo, Rating, Video},
 };
@@ -253,4 +253,26 @@ pub async fn rate_video(
         }
         _ => HttpResponse::InternalServerError().finish(),
     }
+}
+
+pub async fn get_rating(pool: web::Data<DbPool>, query: web::Query<IdQuery>) -> HttpResponse {
+    let conn = pool.get().unwrap();
+    let video = match web::block(move || Video::find_by_id(&conn, &query.id)).await {
+        Ok(v) => v,
+        Err(BlockingError::Error(Error::NotFound)) => return HttpResponse::NotFound().finish(),
+        _ => return HttpResponse::InternalServerError().finish(),
+    };
+    let conn = pool.get().unwrap();
+    let id_closure = video.id.clone();
+    let like = match web::block(move || Rating::count(&conn, &id_closure, false)).await {
+        Ok(c) => c,
+        _ => return HttpResponse::InternalServerError().finish(),
+    };
+    let conn = pool.get().unwrap();
+    let id_closure = video.id.clone();
+    let dislike = match web::block(move || Rating::count(&conn, &id_closure, true)).await {
+        Ok(c) => c,
+        _ => return HttpResponse::InternalServerError().finish(),
+    };
+    HttpResponse::Ok().json(VideoRatingDTO { like, dislike })
 }

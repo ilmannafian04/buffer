@@ -204,4 +204,13 @@ impl Rating {
             .filter(user_id.eq(u_id))
             .get_result(conn)
     }
+
+    pub fn count(conn: &PgConnection, v_id: &str, is_d: bool) -> QueryResult<i64> {
+        use crate::schema::ratings::dsl::{is_dislike, video_id};
+        all_ratings
+            .count()
+            .filter(video_id.eq(v_id))
+            .filter(is_dislike.eq(is_d))
+            .get_result(conn)
+    }
 }

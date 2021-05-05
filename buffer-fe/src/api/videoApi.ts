@@ -30,3 +30,7 @@ export const newComment = (data: NewCommentData) => {
 export const rateVideo = (id: string, isDislike = false) => {
   return axios.post('/api/a/video/rate', { id, isDislike }, authenticatedConfig());
 };
+
+export const getVideoRating = (id: string) => {
+  return axios.get('/api/video/rating', { params: { id } });
+};

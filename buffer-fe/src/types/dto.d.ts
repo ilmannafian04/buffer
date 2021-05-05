@@ -44,3 +44,8 @@ export type NewCommentDTO = {
   content: string;
   createdAt: string;
 };
+
+export type VideoRatingDTO = {
+  like: number;
+  dislike: number;
+};

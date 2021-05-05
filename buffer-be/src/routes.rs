@@ -18,7 +18,8 @@ pub fn configuration(cfg: &mut web::ServiceConfig) {
         web::scope("/api/video")
             .route("", web::get().to(v::list_videos))
             .route("/detail", web::get().to(v::video_detail))
-            .route("/comments", web::get().to(v::video_comments)),
+            .route("/comments", web::get().to(v::video_comments))
+            .route("/rating", web::get().to(v::get_rating)),
     )
     .service(
         web::scope("/api/a/creator")
