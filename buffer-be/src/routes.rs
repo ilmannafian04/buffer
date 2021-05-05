@@ -20,7 +20,8 @@ pub fn configuration(cfg: &mut web::ServiceConfig) {
             .route("", web::get().to(v::list_videos))
             .route("/detail", web::get().to(v::video_detail))
             .route("/comments", web::get().to(v::video_comments))
-            .route("/rating", web::get().to(v::get_rating)),
+            .route("/rating", web::get().to(v::get_rating))
+            .route("/search", web::get().to(v::search_videos)),
     )
     .service(
         web::scope("/api/a/creator")
@@ -30,7 +31,11 @@ pub fn configuration(cfg: &mut web::ServiceConfig) {
             .route("/profile", web::post().to(u::update_profile))
             .wrap(HttpAuthentication::bearer(auth_validator)),
     )
-    .service(web::scope("/api/creator").route("", web::get().to(u::creator_profile)))
+    .service(
+        web::scope("/api/creator")
+            .route("", web::get().to(u::creator_profile))
+            .route("/videos", web::get().to(v::creator_videos)),
+    )
     .service(
         web::scope("/api/auth")
             .route("/ping", web::get().to(c::ping))

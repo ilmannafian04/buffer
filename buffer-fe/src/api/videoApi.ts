@@ -40,3 +40,7 @@ export const hasRated = (id: string) => {
   config.params = { id };
   return axios.get('/api/a/video/hasrated', config);
 };
+
+export const searchVideo = (term: string) => {
+  return axios.get('/api/video/search', { params: { term } });
+};

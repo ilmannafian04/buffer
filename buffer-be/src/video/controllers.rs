@@ -14,13 +14,13 @@ use crate::{
         types::DbPool,
     },
     config::Config,
-    user::models::User,
+    user::{dtos::CreatorLookUpDTO, models::User},
 };
 
 use super::{
     dtos::{
-        CommentDTO, HasRatedDTO, NewCommentDTO, NewVideoDTO, RateVideoRequest, VideoDetailDTO,
-        VideoListDTO, VideoListResponseDTO, VideoRatingDTO,
+        CommentDTO, HasRatedDTO, NewCommentDTO, NewVideoDTO, RateVideoRequest, SearchVideoDTO,
+        VideoDetailDTO, VideoListDTO, VideoListResponseDTO, VideoRatingDTO,
     },
     models::{Comment, NewComment, NewVideo, Rating, Video},
 };
@@ -303,5 +303,56 @@ pub async fn has_rated(
             is_dislike: false,
         }),
         _ => HttpResponse::InternalServerError().finish(),
+    }
+}
+
+pub async fn creator_videos(
+    pool: web::Data<DbPool>,
+    query: web::Query<CreatorLookUpDTO>,
+    config: web::Data<Config>,
+) -> HttpResponse {
+    let conn = pool.get().unwrap();
+    let user =
+        match web::block(move || User::find_by_display_name(&conn, &query.display_name)).await {
+            Ok(u) => u,
+            Err(BlockingError::Error(Error::NotFound)) => return HttpResponse::NotFound().finish(),
+            _ => return HttpResponse::InternalServerError().finish(),
+        };
+    let conn = pool.get().unwrap();
+    match web::block(move || Video::find_many_by_id_join_user(&conn, &user.id)).await {
+        Ok(videos) => HttpResponse::Ok().json(
+            videos
+                .into_iter()
+                .map(|tuple| {
+                    let (mut v, u) = tuple;
+                    v.resolve(&config.media_base_url);
+                    VideoDetailDTO::from((v, u))
+                })
+                .collect::<Vec<VideoDetailDTO>>(),
+        ),
+        _ => return HttpResponse::InternalServerError().finish(),
+    }
+}
+
+pub async fn search_videos(
+    pool: web::Data<DbPool>,
+    query: web::Query<SearchVideoDTO>,
+    config: web::Data<Config>,
+) -> HttpResponse {
+    let conn = pool.get().unwrap();
+    match web::block(move || Video::find_many_by_title_or_description_join_user(&conn, &query.term))
+        .await
+    {
+        Ok(videos) => HttpResponse::Ok().json(
+            videos
+                .into_iter()
+                .map(|tuple| {
+                    let (mut v, u) = tuple;
+                    v.resolve(&config.media_base_url);
+                    VideoDetailDTO::from((v, u))
+                })
+                .collect::<Vec<VideoDetailDTO>>(),
+        ),
+        _ => return HttpResponse::InternalServerError().finish(),
     }
 }

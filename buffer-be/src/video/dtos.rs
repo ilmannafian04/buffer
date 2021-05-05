@@ -154,3 +154,8 @@ pub struct HasRatedDTO {
     #[serde(rename = "isDislike")]
     pub is_dislike: bool,
 }
+
+#[derive(Deserialize)]
+pub struct SearchVideoDTO {
+    pub term: String,
+}

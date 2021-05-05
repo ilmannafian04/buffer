@@ -2,6 +2,7 @@
   import { AxiosResponse } from 'axios';
   // noinspection TypeScriptCheckImport
   import { Button, Field, Icon, Input } from 'svelma';
+  import { onMount } from 'svelte';
   import { Link, navigate } from 'svelte-routing';
 
   import { getCommentsInVideo, newComment } from '../../api/videoApi';
@@ -17,16 +18,6 @@
     content: '',
     videoId: '',
   };
-
-  $: {
-    commentData = { ...commentData, videoId: videoId ? videoId : '' };
-    if (videoId) {
-      getCommentsInVideo(videoId)
-        .then((value: AxiosResponse<CommentDTO[]>) => (comments = value.data))
-        .catch((err) => console.error(err));
-    }
-  }
-
   const submitHandler = () => {
     if ($userState.signedIn) {
       newComment(commentData)
@@ -47,6 +38,14 @@
       navigate('/signin');
     }
   };
+  $: {
+    commentData = { ...commentData, videoId: videoId ? videoId : '' };
+  }
+  onMount(() => {
+    getCommentsInVideo(videoId)
+      .then((value: AxiosResponse<CommentDTO[]>) => (comments = value.data))
+      .catch((err) => console.error(err));
+  });
 </script>
 
 <form on:submit|preventDefault={submitHandler}>

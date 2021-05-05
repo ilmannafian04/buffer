@@ -55,6 +55,31 @@ impl Video {
             .order_by(created_at.desc())
             .get_results(conn)
     }
+
+    pub fn find_many_by_id_join_user(
+        conn: &PgConnection,
+        u_id: &str,
+    ) -> QueryResult<Vec<(Video, User)>> {
+        use crate::schema::videos::dsl::{created_at, uploader};
+        all_videos
+            .filter(uploader.eq(u_id))
+            .inner_join(users::table)
+            .order_by(created_at.desc())
+            .get_results(conn)
+    }
+
+    pub fn find_many_by_title_or_description_join_user(
+        conn: &PgConnection,
+        term: &str,
+    ) -> QueryResult<Vec<(Video, User)>> {
+        use crate::schema::videos::dsl::{created_at, description, title};
+        all_videos
+            .filter(title.like(format!("%{}%", term)))
+            .or_filter(description.like(format!("%{}%", term)))
+            .inner_join(users::table)
+            .order_by(created_at.desc())
+            .get_results(conn)
+    }
 }
 
 impl ResolveMediaURL for Video {
