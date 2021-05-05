@@ -34,3 +34,9 @@ export const rateVideo = (id: string, isDislike = false) => {
 export const getVideoRating = (id: string) => {
   return axios.get('/api/video/rating', { params: { id } });
 };
+
+export const hasRated = (id: string) => {
+  const config = authenticatedConfig();
+  config.params = { id };
+  return axios.get('/api/a/video/hasrated', config);
+};

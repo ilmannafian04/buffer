@@ -19,8 +19,8 @@ use crate::{
 
 use super::{
     dtos::{
-        CommentDTO, NewCommentDTO, NewVideoDTO, RateVideoRequest, VideoDetailDTO, VideoListDTO,
-        VideoListResponseDTO, VideoRatingDTO,
+        CommentDTO, HasRatedDTO, NewCommentDTO, NewVideoDTO, RateVideoRequest, VideoDetailDTO,
+        VideoListDTO, VideoListResponseDTO, VideoRatingDTO,
     },
     models::{Comment, NewComment, NewVideo, Rating, Video},
 };
@@ -231,9 +231,16 @@ pub async fn rate_video(
     let param = (video.id.clone(), user.id.clone());
     match web::block(move || Rating::find_by_video_and_user(&conn, &param.0, &param.1)).await {
         Ok(rating) => {
+            let conn = pool.get().unwrap();
             if rating.is_dislike != payload.is_dislike {
-                let conn = pool.get().unwrap();
                 if let Err(_) = web::block(move || rating.update(&conn, payload.is_dislike)).await {
+                    return HttpResponse::InternalServerError().finish();
+                }
+            } else {
+                if let Err(_) =
+                    web::block(move || Rating::delete(&conn, &rating.video_id, &rating.user_id))
+                        .await
+                {
                     return HttpResponse::InternalServerError().finish();
                 }
             }
@@ -275,4 +282,26 @@ pub async fn get_rating(pool: web::Data<DbPool>, query: web::Query<IdQuery>) -> 
         _ => return HttpResponse::InternalServerError().finish(),
     };
     HttpResponse::Ok().json(VideoRatingDTO { like, dislike })
+}
+
+pub async fn has_rated(
+    pool: web::Data<DbPool>,
+    req: HttpRequest,
+    query: web::Query<IdQuery>,
+) -> HttpResponse {
+    let ext = req.head().extensions();
+    let user = ext.get::<User>().unwrap();
+    let conn = pool.get().unwrap();
+    let id_closure = user.id.clone();
+    match web::block(move || Rating::find_by_video_and_user(&conn, &query.id, &id_closure)).await {
+        Ok(rating) => HttpResponse::Ok().json(HasRatedDTO {
+            has_rated: true,
+            is_dislike: rating.is_dislike,
+        }),
+        Err(BlockingError::Error(Error::NotFound)) => HttpResponse::Ok().json(HasRatedDTO {
+            has_rated: false,
+            is_dislike: false,
+        }),
+        _ => HttpResponse::InternalServerError().finish(),
+    }
 }

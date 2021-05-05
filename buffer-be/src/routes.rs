@@ -12,6 +12,7 @@ pub fn configuration(cfg: &mut web::ServiceConfig) {
             .route("/", web::post().to(v::upload_video))
             .route("/comment", web::post().to(v::new_comment))
             .route("/rate", web::post().to(v::rate_video))
+            .route("/hasrated", web::get().to(v::has_rated))
             .wrap(HttpAuthentication::bearer(auth_validator)),
     )
     .service(

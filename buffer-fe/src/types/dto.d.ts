@@ -49,3 +49,8 @@ export type VideoRatingDTO = {
   like: number;
   dislike: number;
 };
+
+export type HasRatedDTO = {
+  hasRated: boolean;
+  isDislike: boolean;
+};

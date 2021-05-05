@@ -213,4 +213,14 @@ impl Rating {
             .filter(is_dislike.eq(is_d))
             .get_result(conn)
     }
+
+    pub fn delete(conn: &PgConnection, v_id: &str, u_id: &str) -> QueryResult<usize> {
+        use crate::schema::ratings::dsl::{user_id, video_id};
+        diesel::delete(
+            all_ratings
+                .filter(video_id.eq(v_id))
+                .filter(user_id.eq(u_id)),
+        )
+        .execute(conn)
+    }
 }

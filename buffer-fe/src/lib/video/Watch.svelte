@@ -6,8 +6,9 @@
   import { Link } from 'svelte-routing';
 
   import CommentSection from './CommentSection.svelte';
-  import { getVideoDetail, getVideoRating, rateVideo } from '../../api/videoApi';
-  import type { VideoDetailDTO, VideoRatingDTO } from '../../types/dto';
+  import { getVideoDetail, getVideoRating, hasRated, rateVideo } from '../../api/videoApi';
+  import { userState } from '../../store/authStore';
+  import type { HasRatedDTO, VideoDetailDTO, VideoRatingDTO } from '../../types/dto';
 
   export let videoId;
   let date = '';
@@ -25,29 +26,55 @@
     like: 0,
     dislike: 0,
   };
+  let userHasRated = {
+    hasRated: false,
+    isDislike: false,
+  };
   const ratingHandler = (dislike: boolean) => {
-    if (videoId) {
+    if (videoId && $userState.signedIn) {
       rateVideo(videoId, dislike)
         .then(() => {
-          if (dislike) {
-            rating.dislike++;
-            rating.like--;
+          if (!userHasRated.hasRated) {
+            if (!dislike) {
+              rating.like++;
+            } else {
+              rating.dislike++;
+            }
+            userHasRated.hasRated = true;
           } else {
-            rating.like++;
-            rating.dislike--;
+            if (!dislike) {
+              if (!userHasRated.isDislike) {
+                rating.like--;
+                userHasRated.hasRated = false;
+              } else {
+                rating.like++;
+                rating.dislike--;
+              }
+            } else {
+              if (!userHasRated.isDislike) {
+                rating.like--;
+                rating.dislike++;
+              } else {
+                rating.dislike--;
+                userHasRated.hasRated = false;
+              }
+            }
           }
+          userHasRated.isDislike = dislike;
         })
         .catch((err) => console.error(err));
     }
   };
 
-  $: {
-    if (video.createdAt !== '') {
-      let dateObj = new Date(video.createdAt);
-      date = dateObj.toDateString();
-    }
+  $: if (video.createdAt !== '') {
+    let dateObj = new Date(video.createdAt);
+    date = dateObj.toDateString();
   }
-
+  $: if ($userState.signedIn && videoId) {
+    hasRated(videoId)
+      .then((value: AxiosResponse<HasRatedDTO>) => (userHasRated = value.data))
+      .catch((err) => console.error(err));
+  }
   onMount(() => {
     getVideoDetail(videoId)
       .then((value: AxiosResponse<VideoDetailDTO>) => {
@@ -69,11 +96,11 @@
   <div class="creator-detail">
     <div><Link to="/c/{video.uploader}">{video.uploader}</Link> uploaded on {date}</div>
     <div class="rating">
-      <div class="rating-button">
+      <div class="rating-button" class:has-text-primary={userHasRated.hasRated && !userHasRated.isDislike}>
         <Icon pack="fa" size="is-medium" icon="thumbs-up" on:click={() => ratingHandler(false)} />
       </div>
       {rating.like}/{rating.dislike}
-      <div class="rating-button">
+      <div class="rating-button" class:has-text-primary={userHasRated.hasRated && userHasRated.isDislike}>
         <Icon pack="fa" size="is-medium" icon="thumbs-down" on:click={() => ratingHandler(true)} />
       </div>
     </div>

@@ -146,3 +146,11 @@ pub struct VideoRatingDTO {
     pub like: i64,
     pub dislike: i64,
 }
+
+#[derive(Serialize)]
+pub struct HasRatedDTO {
+    #[serde(rename = "hasRated")]
+    pub has_rated: bool,
+    #[serde(rename = "isDislike")]
+    pub is_dislike: bool,
+}
