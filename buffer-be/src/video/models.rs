@@ -6,7 +6,7 @@ use rand::Rng;
 use serde::Serialize;
 
 use crate::{
-    common::models::ResolveMediaURL,
+    common::models::ResolveMediaUrl,
     schema::comments::{self, dsl::comments as all_comments},
     schema::ratings::{self, dsl::ratings as all_ratings},
     schema::users,
@@ -82,7 +82,7 @@ impl Video {
     }
 }
 
-impl ResolveMediaURL for Video {
+impl ResolveMediaUrl for Video {
     fn resolve(&mut self, base_url: &str) {
         let base = url::Url::parse(base_url).unwrap();
         self.video_path.remove(0);

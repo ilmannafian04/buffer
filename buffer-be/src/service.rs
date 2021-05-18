@@ -16,7 +16,7 @@ pub struct Claims {
 impl Claims {
     fn new(subject: String, iat: DateTime<Utc>, exp: DateTime<Utc>) -> Self {
         Self {
-            sub: subject.to_string(),
+            sub: subject,
             iat: iat
                 .date()
                 .and_hms_milli(iat.hour(), iat.minute(), iat.second(), 0),
@@ -26,7 +26,7 @@ impl Claims {
         }
     }
 
-    fn into_jwt_string(self, secret_key: &String) -> String {
+    fn into_jwt_string(self, secret_key: &str) -> String {
         jsonwebtoken::encode(
             &Header::default(),
             &self,
@@ -58,7 +58,7 @@ mod claim_serde {
 }
 
 impl User {
-    pub fn authennticate(self, password: &String, secret_key: &String) -> Result<String, ()> {
+    pub fn authenticate(self, password: &str, secret_key: &str) -> Result<String, ()> {
         match argon2::verify_encoded(&self.password, &password.as_bytes()) {
             Ok(is_valid) => {
                 if is_valid {

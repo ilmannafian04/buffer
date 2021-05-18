@@ -34,12 +34,12 @@ pub struct User {
 impl User {
     pub fn check_unique_integrity(
         conn: &PgConnection,
-        uname: &String,
-        mail: &String,
+        uname: &str,
+        mail: &str,
     ) -> Result<(), UniqueViolationKind> {
-        if let Ok(_) = Self::find_by_email(conn, mail) {
+        if Self::find_by_email(conn, mail).is_ok() {
             Err(UniqueViolationKind::Email)
-        } else if let Ok(_) = Self::find_by_username(conn, uname) {
+        } else if Self::find_by_username(conn, uname).is_ok() {
             Err(UniqueViolationKind::Username)
         } else {
             Ok(())
@@ -51,17 +51,17 @@ impl User {
         all_users.filter(id.eq(user_id)).first(conn)
     }
 
-    pub fn find_by_email(conn: &PgConnection, mail: &String) -> QueryResult<User> {
+    pub fn find_by_email(conn: &PgConnection, mail: &str) -> QueryResult<User> {
         use crate::schema::users::dsl::email;
         all_users.filter(email.eq(mail)).first(conn)
     }
 
-    pub fn find_by_username(conn: &PgConnection, uname: &String) -> QueryResult<User> {
+    pub fn find_by_username(conn: &PgConnection, uname: &str) -> QueryResult<User> {
         use crate::schema::users::dsl::username;
         all_users.filter(username.eq(uname)).first(conn)
     }
 
-    pub fn find_by_display_name(conn: &PgConnection, d_name: &String) -> QueryResult<Vec<User>> {
+    pub fn find_by_display_name(conn: &PgConnection, d_name: &str) -> QueryResult<Vec<User>> {
         use crate::schema::users::dsl::display_name;
         all_users
             .filter(display_name.eq(d_name))
@@ -147,8 +147,8 @@ pub struct Follower {
 impl Follower {
     pub fn delete(
         conn: &PgConnection,
-        creator_id: &String,
-        user_id: &String,
+        creator_id: &str,
+        user_id: &str,
     ) -> QueryResult<usize> {
         diesel::delete(
             all_followers
@@ -158,7 +158,7 @@ impl Follower {
         .execute(conn)
     }
 
-    pub fn get_follower_count(conn: &PgConnection, c_id: &String) -> QueryResult<i64> {
+    pub fn get_follower_count(conn: &PgConnection, c_id: &str) -> QueryResult<i64> {
         use crate::schema::followers::dsl::creator_id;
         all_followers
             .filter(creator_id.eq(c_id))

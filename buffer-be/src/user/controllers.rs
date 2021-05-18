@@ -9,14 +9,14 @@ use crate::{
 
 use super::{
     dtos::{
-        CreatorLookUpDTO, CreatorProfileResponseDTO, IsFollowingResponseDTO, JWTResponse,
-        SignInDTO, UpdateProfileDTO,
+        CreatorLookUpDto, CreatorProfileResponseDto, IsFollowingResponseDto, JwtResponse,
+        SignInDto, UpdateProfileDto,
     },
     models::{Creator, Follower, NewFollower, NewUser, UniqueViolationKind, User},
 };
 
 pub async fn signup(mut new_user: web::Json<NewUser>, pool: web::Data<DbPool>) -> HttpResponse {
-    if let Err(_) = new_user.validate() {
+    if new_user.validate().is_err() {
         return HttpResponse::BadRequest().json(SimpleError {
             error: "Field validation failed",
         });
@@ -26,19 +26,19 @@ pub async fn signup(mut new_user: web::Json<NewUser>, pool: web::Data<DbPool>) -
             if let Err(kind) =
                 User::check_unique_integrity(&conn, &new_user.username, &new_user.email)
             {
-                match kind {
+                return match kind {
                     UniqueViolationKind::Email => {
-                        return HttpResponse::BadRequest().json(SimpleError { error: "email" })
+                        HttpResponse::BadRequest().json(SimpleError { error: "email" })
                     }
                     UniqueViolationKind::Username => {
-                        return HttpResponse::BadRequest().json(SimpleError { error: "username" })
+                        HttpResponse::BadRequest().json(SimpleError { error: "username" })
                     }
-                }
+                };
             }
         }
         Err(_) => return DatabaseError::PoolLockError.error_response(),
     }
-    if let Err(_) = new_user.hash_password() {
+    if new_user.hash_password().is_err() {
         return HttpResponse::InternalServerError().finish();
     }
     let user = match pool.get() {
@@ -64,9 +64,9 @@ pub async fn signup(mut new_user: web::Json<NewUser>, pool: web::Data<DbPool>) -
     }
 }
 
-pub async fn singin(
+pub async fn sign_in(
     pool: web::Data<DbPool>,
-    credential: web::Json<SignInDTO>,
+    credential: web::Json<SignInDto>,
     config: web::Data<Config>,
 ) -> HttpResponse {
     let user = match pool.get() {
@@ -80,8 +80,8 @@ pub async fn singin(
         }
         Err(_) => return DatabaseError::PoolLockError.error_response(),
     };
-    match user.authennticate(&credential.password, &config.secret_key) {
-        Ok(jwt) => HttpResponse::Ok().json(JWTResponse { jwt }),
+    match user.authenticate(&credential.password, &config.secret_key) {
+        Ok(jwt) => HttpResponse::Ok().json(JwtResponse { jwt }),
         Err(_) => HttpResponse::Unauthorized().finish(),
     }
 }
@@ -92,7 +92,7 @@ pub async fn user_info(request: HttpRequest) -> HttpResponse {
 
 pub async fn follow(
     request: HttpRequest,
-    payload: web::Json<CreatorLookUpDTO>,
+    payload: web::Json<CreatorLookUpDto>,
     pool: web::Data<DbPool>,
 ) -> HttpResponse {
     let extension = request.head().extensions();
@@ -128,7 +128,7 @@ pub async fn follow(
 
 pub async fn unfollow(
     request: HttpRequest,
-    payload: web::Json<CreatorLookUpDTO>,
+    payload: web::Json<CreatorLookUpDto>,
     pool: web::Data<DbPool>,
 ) -> HttpResponse {
     let extension = request.head().extensions();
@@ -158,7 +158,7 @@ pub async fn unfollow(
 
 pub async fn creator_profile(
     pool: web::Data<DbPool>,
-    query: web::Query<CreatorLookUpDTO>,
+    query: web::Query<CreatorLookUpDto>,
 ) -> HttpResponse {
     let creator = match pool.get() {
         Ok(conn) => {
@@ -179,7 +179,7 @@ pub async fn creator_profile(
         }
         Err(_) => return DatabaseError::PoolLockError.error_response(),
     };
-    HttpResponse::Ok().json(CreatorProfileResponseDTO {
+    HttpResponse::Ok().json(CreatorProfileResponseDto {
         creator,
         follower_count,
     })
@@ -188,7 +188,7 @@ pub async fn creator_profile(
 pub async fn is_following(
     request: HttpRequest,
     pool: web::Data<DbPool>,
-    query: web::Query<CreatorLookUpDTO>,
+    query: web::Query<CreatorLookUpDto>,
 ) -> HttpResponse {
     let extension = request.head().extensions();
     let user = extension.get::<User>().unwrap();
@@ -203,9 +203,9 @@ pub async fn is_following(
     match web::block(move || Follower::get_by_creator_and_viewer(&conn, &creator.id, &u_id_closure))
         .await
     {
-        Ok(_) => HttpResponse::Ok().json(IsFollowingResponseDTO { is_following: true }),
+        Ok(_) => HttpResponse::Ok().json(IsFollowingResponseDto { is_following: true }),
         Err(BlockingError::Error(Error::NotFound)) => {
-            HttpResponse::Ok().json(IsFollowingResponseDTO {
+            HttpResponse::Ok().json(IsFollowingResponseDto {
                 is_following: false,
             })
         }
@@ -216,9 +216,9 @@ pub async fn is_following(
 pub async fn update_profile(
     req: HttpRequest,
     pool: web::Data<DbPool>,
-    payload: web::Json<UpdateProfileDTO>,
+    payload: web::Json<UpdateProfileDto>,
 ) -> HttpResponse {
-    if let Err(_) = payload.validate() {
+    if payload.validate().is_err() {
         return HttpResponse::BadRequest().finish();
     };
     let ext = req.head().extensions();

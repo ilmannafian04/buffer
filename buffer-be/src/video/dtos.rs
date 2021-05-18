@@ -8,13 +8,13 @@ use crate::user::models::User;
 use super::models::{Comment, Video};
 
 #[derive(Deserialize)]
-pub struct NewVideoDTO {
+pub struct NewVideoDto {
     pub title: String,
     pub description: String,
 }
 
 #[derive(Deserialize)]
-pub struct NewCommentDTO {
+pub struct NewCommentDto {
     #[serde(rename = "videoId")]
     pub video_id: String,
     pub content: String,
@@ -41,7 +41,7 @@ impl<'de> Deserialize<'de> for VideoListType {
 
 #[skip_serializing_none]
 #[derive(Deserialize, Validate)]
-pub struct VideoListDTO {
+pub struct VideoListDto {
     #[serde(default)]
     #[validate(range(min = 0))]
     pub skip: i64,
@@ -50,7 +50,7 @@ pub struct VideoListDTO {
 }
 
 #[derive(Serialize)]
-pub struct VideoListResponseDTO {
+pub struct VideoListResponseDto {
     pub id: String,
     pub title: String,
     #[serde(rename = "thumbnailPath")]
@@ -62,7 +62,7 @@ pub struct VideoListResponseDTO {
     pub uploader_id: String,
 }
 
-impl From<(Video, Option<User>)> for VideoListResponseDTO {
+impl From<(Video, Option<User>)> for VideoListResponseDto {
     fn from(tuple: (Video, Option<User>)) -> Self {
         let (v, u) = tuple;
         let u = u.unwrap();
@@ -78,7 +78,7 @@ impl From<(Video, Option<User>)> for VideoListResponseDTO {
 }
 
 #[derive(Serialize)]
-pub struct VideoDetailDTO {
+pub struct VideoDetailDto {
     pub id: String,
     pub title: String,
     pub description: String,
@@ -94,7 +94,7 @@ pub struct VideoDetailDTO {
     pub uploader_id: String,
 }
 
-impl From<(Video, User)> for VideoDetailDTO {
+impl From<(Video, User)> for VideoDetailDto {
     fn from(t: (Video, User)) -> Self {
         let (v, u) = t;
         Self {
@@ -112,7 +112,7 @@ impl From<(Video, User)> for VideoDetailDTO {
 }
 
 #[derive(Serialize)]
-pub struct CommentDTO {
+pub struct CommentDto {
     pub id: String,
     pub content: String,
     #[serde(rename = "createdAt")]
@@ -125,7 +125,7 @@ pub struct CommentDTO {
     pub username: String,
 }
 
-impl From<(Comment, Option<User>)> for CommentDTO {
+impl From<(Comment, Option<User>)> for CommentDto {
     fn from(tuple: (Comment, Option<User>)) -> Self {
         let (c, u) = tuple;
         let u = u.unwrap();
@@ -148,13 +148,13 @@ pub struct RateVideoRequest {
 }
 
 #[derive(Serialize)]
-pub struct VideoRatingDTO {
+pub struct VideoRatingDto {
     pub like: i64,
     pub dislike: i64,
 }
 
 #[derive(Serialize)]
-pub struct HasRatedDTO {
+pub struct HasRatedDto {
     #[serde(rename = "hasRated")]
     pub has_rated: bool,
     #[serde(rename = "isDislike")]
@@ -162,6 +162,6 @@ pub struct HasRatedDTO {
 }
 
 #[derive(Deserialize)]
-pub struct SearchVideoDTO {
+pub struct SearchVideoDto {
     pub term: String,
 }

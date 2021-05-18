@@ -8,19 +8,19 @@ use validator::Validate;
 
 use crate::{
     common::{
-        dtos::{IdQuery, IndexRequestDTO},
+        dtos::{IdQuery, IndexRequestDto},
         errors::DatabaseError,
-        models::ResolveMediaURL,
+        models::ResolveMediaUrl,
         types::DbPool,
     },
     config::Config,
-    user::{dtos::CreatorLookUpDTO, models::User},
+    user::{dtos::CreatorLookUpDto, models::User},
 };
 
 use super::{
     dtos::{
-        CommentDTO, HasRatedDTO, NewCommentDTO, NewVideoDTO, RateVideoRequest, SearchVideoDTO,
-        VideoDetailDTO, VideoListDTO, VideoListResponseDTO, VideoRatingDTO,
+        CommentDto, HasRatedDto, NewCommentDto, NewVideoDto, RateVideoRequest, SearchVideoDto,
+        VideoDetailDto, VideoListDto, VideoListResponseDto, VideoRatingDto,
     },
     models::{Comment, NewComment, NewVideo, Rating, Video},
 };
@@ -39,7 +39,7 @@ pub async fn upload_video(
     let mut thumbnail_is_saved = false;
     let base_path = Path::new(&config.media_base_dir);
     let path_to_video_folder = Path::new(&user.id.to_string()).join(new_video.id.clone());
-    if let Err(_) = std::fs::create_dir_all(&base_path.join(&path_to_video_folder)) {
+    if std::fs::create_dir_all(&base_path.join(&path_to_video_folder)).is_err() {
         return HttpResponse::InternalServerError().finish();
     };
     while let Ok(Some(mut field)) = payload.try_next().await {
@@ -53,7 +53,7 @@ pub async fn upload_video(
                     Err(_) => return HttpResponse::BadRequest().finish(),
                 };
             }
-            match serde_json::from_str::<NewVideoDTO>(json_string.as_str()) {
+            match serde_json::from_str::<NewVideoDto>(json_string.as_str()) {
                 Ok(dto) => {
                     new_video.title = dto.title;
                     new_video.description = dto.description;
@@ -130,7 +130,7 @@ pub async fn upload_video(
 
 pub async fn new_comment(
     pool: web::Data<DbPool>,
-    payload: web::Json<NewCommentDTO>,
+    payload: web::Json<NewCommentDto>,
     req: HttpRequest,
 ) -> HttpResponse {
     let u_id = req.head().extensions().get::<User>().unwrap().id.clone();
@@ -142,10 +142,12 @@ pub async fn new_comment(
         _ => return HttpResponse::InternalServerError().finish(),
     };
     let conn = pool.get().unwrap();
-    let mut new_comment = NewComment::default();
-    new_comment.user_id = u_id;
-    new_comment.video_id = video.id.clone();
-    new_comment.content = payload.content.clone();
+    let new_comment = NewComment {
+        user_id: u_id,
+        video_id: video.id.clone(),
+        content: payload.content.clone(),
+        ..Default::default()
+    };
     match web::block(move || new_comment.insert(&conn)).await {
         Ok(c) => HttpResponse::Ok().json(c),
         _ => HttpResponse::InternalServerError().finish(),
@@ -154,10 +156,10 @@ pub async fn new_comment(
 
 pub async fn list_videos(
     pool: web::Data<DbPool>,
-    query: web::Query<VideoListDTO>,
+    query: web::Query<VideoListDto>,
     config: web::Data<Config>,
 ) -> HttpResponse {
-    if let Err(_) = query.validate() {
+    if query.validate().is_err() {
         return HttpResponse::BadRequest().finish();
     }
     let conn = pool.get().unwrap();
@@ -166,9 +168,9 @@ pub async fn list_videos(
             v.into_iter()
                 .map(|mut t| {
                     t.0.resolve(&config.media_base_url);
-                    VideoListResponseDTO::from(t)
+                    VideoListResponseDto::from(t)
                 })
-                .collect::<Vec<VideoListResponseDTO>>(),
+                .collect::<Vec<VideoListResponseDto>>(),
         ),
         Err(_) => return HttpResponse::InternalServerError().finish(),
     }
@@ -183,7 +185,7 @@ pub async fn video_detail(
     match web::block(move || Video::find_by_id_join_user(&conn, &query.id)).await {
         Ok(mut t) => {
             t.0.resolve(&config.media_base_url);
-            HttpResponse::Ok().json(VideoDetailDTO::from(t))
+            HttpResponse::Ok().json(VideoDetailDto::from(t))
         }
         Err(BlockingError::Error(Error::NotFound)) => return HttpResponse::NotFound().finish(),
         _ => return HttpResponse::InternalServerError().finish(),
@@ -192,7 +194,7 @@ pub async fn video_detail(
 
 pub async fn video_comments(
     pool: web::Data<DbPool>,
-    query: web::Query<IndexRequestDTO>,
+    query: web::Query<IndexRequestDto>,
 ) -> HttpResponse {
     let conn = pool.get().unwrap();
     let id_closure = query.id.clone();
@@ -206,8 +208,8 @@ pub async fn video_comments(
         Ok(tuples) => HttpResponse::Ok().json(
             tuples
                 .into_iter()
-                .map(CommentDTO::from)
-                .collect::<Vec<CommentDTO>>(),
+                .map(CommentDto::from)
+                .collect::<Vec<CommentDto>>(),
         ),
         _ => return HttpResponse::InternalServerError().finish(),
     }
@@ -233,16 +235,17 @@ pub async fn rate_video(
         Ok(rating) => {
             let conn = pool.get().unwrap();
             if rating.is_dislike != payload.is_dislike {
-                if let Err(_) = web::block(move || rating.update(&conn, payload.is_dislike)).await {
-                    return HttpResponse::InternalServerError().finish();
-                }
-            } else {
-                if let Err(_) =
-                    web::block(move || Rating::delete(&conn, &rating.video_id, &rating.user_id))
-                        .await
+                if web::block(move || rating.update(&conn, payload.is_dislike))
+                    .await
+                    .is_err()
                 {
                     return HttpResponse::InternalServerError().finish();
                 }
+            } else if web::block(move || Rating::delete(&conn, &rating.video_id, &rating.user_id))
+                .await
+                .is_err()
+            {
+                return HttpResponse::InternalServerError().finish();
             }
             HttpResponse::Ok().finish()
         }
@@ -281,7 +284,7 @@ pub async fn get_rating(pool: web::Data<DbPool>, query: web::Query<IdQuery>) -> 
         Ok(c) => c,
         _ => return HttpResponse::InternalServerError().finish(),
     };
-    HttpResponse::Ok().json(VideoRatingDTO { like, dislike })
+    HttpResponse::Ok().json(VideoRatingDto { like, dislike })
 }
 
 pub async fn has_rated(
@@ -294,11 +297,11 @@ pub async fn has_rated(
     let conn = pool.get().unwrap();
     let id_closure = user.id.clone();
     match web::block(move || Rating::find_by_video_and_user(&conn, &query.id, &id_closure)).await {
-        Ok(rating) => HttpResponse::Ok().json(HasRatedDTO {
+        Ok(rating) => HttpResponse::Ok().json(HasRatedDto {
             has_rated: true,
             is_dislike: rating.is_dislike,
         }),
-        Err(BlockingError::Error(Error::NotFound)) => HttpResponse::Ok().json(HasRatedDTO {
+        Err(BlockingError::Error(Error::NotFound)) => HttpResponse::Ok().json(HasRatedDto {
             has_rated: false,
             is_dislike: false,
         }),
@@ -308,7 +311,7 @@ pub async fn has_rated(
 
 pub async fn creator_videos(
     pool: web::Data<DbPool>,
-    query: web::Query<CreatorLookUpDTO>,
+    query: web::Query<CreatorLookUpDto>,
     config: web::Data<Config>,
 ) -> HttpResponse {
     let conn = pool.get().unwrap();
@@ -325,9 +328,9 @@ pub async fn creator_videos(
                 .map(|tuple| {
                     let (mut v, u) = tuple;
                     v.resolve(&config.media_base_url);
-                    VideoDetailDTO::from((v, u))
+                    VideoDetailDto::from((v, u))
                 })
-                .collect::<Vec<VideoDetailDTO>>(),
+                .collect::<Vec<VideoDetailDto>>(),
         ),
         _ => return HttpResponse::InternalServerError().finish(),
     }
@@ -335,7 +338,7 @@ pub async fn creator_videos(
 
 pub async fn search_videos(
     pool: web::Data<DbPool>,
-    query: web::Query<SearchVideoDTO>,
+    query: web::Query<SearchVideoDto>,
     config: web::Data<Config>,
 ) -> HttpResponse {
     let conn = pool.get().unwrap();
@@ -348,9 +351,9 @@ pub async fn search_videos(
                 .map(|tuple| {
                     let (mut v, u) = tuple;
                     v.resolve(&config.media_base_url);
-                    VideoDetailDTO::from((v, u))
+                    VideoDetailDto::from((v, u))
                 })
-                .collect::<Vec<VideoDetailDTO>>(),
+                .collect::<Vec<VideoDetailDto>>(),
         ),
         _ => return HttpResponse::InternalServerError().finish(),
     }
