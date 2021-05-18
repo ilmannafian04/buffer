@@ -61,9 +61,11 @@ impl User {
         all_users.filter(username.eq(uname)).first(conn)
     }
 
-    pub fn find_by_display_name(conn: &PgConnection, d_name: &String) -> QueryResult<User> {
+    pub fn find_by_display_name(conn: &PgConnection, d_name: &String) -> QueryResult<Vec<User>> {
         use crate::schema::users::dsl::display_name;
-        all_users.filter(display_name.eq(d_name)).first(conn)
+        all_users
+            .filter(display_name.eq(d_name))
+            .get_results::<User>(conn)
     }
 
     pub fn update(

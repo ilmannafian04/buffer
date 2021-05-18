@@ -99,10 +99,8 @@ pub async fn follow(
     let user = extension.get::<User>().unwrap();
     let creator = match pool.get() {
         Ok(conn) => {
-            let query = web::block(move || {
-                User::find_by_display_name(&conn, &payload.display_name.clone())
-            })
-            .await;
+            let query =
+                web::block(move || User::find_by_username(&conn, &payload.username.clone())).await;
             match query {
                 Ok(creator) => creator,
                 Err(_) => return HttpResponse::NotFound().finish(),
@@ -137,10 +135,8 @@ pub async fn unfollow(
     let user = extension.get::<User>().unwrap();
     let creator = match pool.get() {
         Ok(conn) => {
-            let query = web::block(move || {
-                User::find_by_display_name(&conn, &payload.display_name.clone())
-            })
-            .await;
+            let query =
+                web::block(move || User::find_by_username(&conn, &payload.username.clone())).await;
             match query {
                 Ok(creator) => creator,
                 Err(_) => return HttpResponse::NotFound().finish(),
@@ -166,7 +162,7 @@ pub async fn creator_profile(
 ) -> HttpResponse {
     let creator = match pool.get() {
         Ok(conn) => {
-            match web::block(move || User::find_by_display_name(&conn, &query.display_name)).await {
+            match web::block(move || User::find_by_username(&conn, &query.username)).await {
                 Ok(creator) => creator,
                 Err(_) => return HttpResponse::NotFound().finish(),
             }
@@ -197,12 +193,11 @@ pub async fn is_following(
     let extension = request.head().extensions();
     let user = extension.get::<User>().unwrap();
     let conn = pool.get().unwrap();
-    let creator =
-        match web::block(move || User::find_by_display_name(&conn, &query.display_name)).await {
-            Ok(c) => c,
-            Err(BlockingError::Error(Error::NotFound)) => return HttpResponse::NotFound().finish(),
-            _ => return HttpResponse::InternalServerError().finish(),
-        };
+    let creator = match web::block(move || User::find_by_username(&conn, &query.username)).await {
+        Ok(c) => c,
+        Err(BlockingError::Error(Error::NotFound)) => return HttpResponse::NotFound().finish(),
+        _ => return HttpResponse::InternalServerError().finish(),
+    };
     let conn = pool.get().unwrap();
     let u_id_closure = user.id.clone();
     match web::block(move || Follower::get_by_creator_and_viewer(&conn, &creator.id, &u_id_closure))

@@ -21,6 +21,7 @@
     thumbnailPath: '',
     title: '',
     uploader: '',
+    uploaderUsername: '',
     uploaderId: '',
   };
   let rating = {
@@ -95,7 +96,7 @@
 <div>
   <div class="is-size-4">{video.title}</div>
   <div class="creator-detail">
-    <div><Link to="/c/{video.uploader}">{video.uploader}</Link> uploaded on {date}</div>
+    <div><Link to="/c/{video.uploaderUsername}">{video.uploader}</Link> uploaded on {date}</div>
     <div class="info-right">
       <ShareToTwitter title={video.title} />
       <div class="rating-button" class:has-text-primary={userHasRated.hasRated && !userHasRated.isDislike}>

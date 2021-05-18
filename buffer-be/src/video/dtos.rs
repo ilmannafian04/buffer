@@ -88,6 +88,8 @@ pub struct VideoDetailDTO {
     #[serde(rename = "createdAt")]
     pub created_at: NaiveDateTime,
     pub uploader: String,
+    #[serde(rename = "uploaderUsername")]
+    pub uploader_username: String,
     #[serde(rename = "uploaderId")]
     pub uploader_id: String,
 }
@@ -103,6 +105,7 @@ impl From<(Video, User)> for VideoDetailDTO {
             thumbnaail_path: v.thumbnail_path,
             created_at: v.created_at,
             uploader: u.display_name,
+            uploader_username: u.username,
             uploader_id: u.id,
         }
     }
@@ -118,6 +121,8 @@ pub struct CommentDTO {
     pub user_id: String,
     #[serde(rename = "userDisplayName")]
     pub user_display_name: String,
+    #[serde(rename = "username")]
+    pub username: String,
 }
 
 impl From<(Comment, Option<User>)> for CommentDTO {
@@ -130,6 +135,7 @@ impl From<(Comment, Option<User>)> for CommentDTO {
             created_at: c.created_at,
             user_id: u.id,
             user_display_name: u.display_name,
+            username: u.username,
         }
     }
 }

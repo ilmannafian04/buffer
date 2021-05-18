@@ -7,7 +7,7 @@
 
   import ListVideo from '../components/ListVideo.svelte';
   import { creatorProfile, follow, isFollowing, unfollow } from '../../api/creatorApi';
-  import { getVideoByCreator } from '../../api/userApi';
+  import { getVideoByCreator } from '../../api/videoApi';
   import { userState } from '../../store/authStore';
   import type { CreatorProfileResponse, VideoDetailDTO } from '../../types/dto';
 

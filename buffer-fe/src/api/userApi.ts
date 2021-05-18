@@ -11,7 +11,3 @@ export const getAccount = (): Promise<AxiosResponse<User>> => {
 export const updateProfile = (data: UpdateProfileData) => {
   return axios.post('/api/a/creator/profile', data, authenticatedConfig());
 };
-
-export const getVideoByCreator = (displayName: string) => {
-  return axios.get('/api/creator/videos', { params: { displayName } });
-};

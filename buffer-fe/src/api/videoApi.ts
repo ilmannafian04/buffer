@@ -44,3 +44,7 @@ export const hasRated = (id: string) => {
 export const searchVideo = (term: string) => {
   return axios.get('/api/video/search', { params: { term } });
 };
+
+export const getVideoByCreator = (username: string) => {
+  return axios.get('/api/creator/videos', { params: { username } });
+};

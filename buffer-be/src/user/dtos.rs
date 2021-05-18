@@ -16,8 +16,8 @@ pub struct JWTResponse {
 
 #[derive(Debug, Deserialize)]
 pub struct CreatorLookUpDTO {
-    #[serde(rename = "displayName")]
-    pub display_name: String,
+    #[serde(rename = "username")]
+    pub username: String,
 }
 
 #[derive(Serialize)]

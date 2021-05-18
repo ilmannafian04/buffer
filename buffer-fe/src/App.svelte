@@ -45,8 +45,8 @@
     <Route path="/account">
       <Account />
     </Route>
-    <Route path="/c/:displayName" let:params>
-      <Profile displayName={params.displayName} />
+    <Route path="/c/:userId" let:params>
+      <Profile displayName={params.userId} />
     </Route>
     <Route path="/w/:videoId" let:params>
       <Watch videoId={params.videoId} />

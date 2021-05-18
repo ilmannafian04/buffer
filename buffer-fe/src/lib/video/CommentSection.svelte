@@ -28,6 +28,7 @@
               createdAt: value.data.createdAt,
               id: value.data.id,
               userDisplayName: $userState.user.displayName,
+              username: $userState.user.username,
               userId: $userState.user.id,
             },
             ...comments,
@@ -71,7 +72,7 @@
         <Icon pack="fas" icon="user-circle" size="is-medium" />
         <div>
           <div>
-            <Link to="/c/{comment.userDisplayName}">{comment.userDisplayName}</Link>
+            <Link to="/c/{comment.username}">{comment.userDisplayName}</Link>
             on {parseDate(comment.createdAt)}
           </div>
           <span>{comment.content}</span>
