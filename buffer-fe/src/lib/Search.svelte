@@ -17,6 +17,19 @@
   }
 </script>
 
-{#each videos as video (video.id)}
-  <ListVideo {video} />
-{/each}
+<span class="is-size-2">Search result for {query['term']}</span>
+<div class="video-result">
+  {#each videos as video (video.id)}
+    <div class="m-2">
+      <ListVideo {video} />
+    </div>
+  {/each}
+</div>
+
+<style>
+  .video-result {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+  }
+</style>
