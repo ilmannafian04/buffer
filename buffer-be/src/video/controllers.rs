@@ -24,6 +24,8 @@ use super::{
     },
     models::{Comment, NewComment, NewVideo, Rating, Video},
 };
+use crate::video::dtos::NewCollectionDto;
+use crate::video::models::{Collection, NewCollection};
 
 pub async fn upload_video(
     mut payload: Multipart,
@@ -356,5 +358,25 @@ pub async fn search_videos(
                 .collect::<Vec<VideoDetailDto>>(),
         ),
         _ => return HttpResponse::InternalServerError().finish(),
+    }
+}
+
+pub async fn new_collection(
+    pool: web::Data<DbPool>,
+    payload: web::Json<NewCollectionDto>,
+    req: HttpRequest,
+) -> HttpResponse {
+    let ext = req.head().extensions();
+    let user = ext.get::<User>().unwrap();
+    let new_collection = NewCollection {
+        name: payload.name.clone(),
+        description: payload.description.clone(),
+        user_id: user.id.clone(),
+        ..NewCollection::default()
+    };
+    let conn = pool.get().unwrap();
+    match web::block(move || new_collection.insert(&conn)).await {
+        Ok(c) => HttpResponse::Ok().json(c),
+        _ => HttpResponse::InternalServerError().finish(),
     }
 }

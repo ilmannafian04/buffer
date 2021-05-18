@@ -1,4 +1,21 @@
 table! {
+    collection_videos (collection_id, video_id) {
+        collection_id -> Varchar,
+        video_id -> Varchar,
+    }
+}
+
+table! {
+    collections (id) {
+        id -> Varchar,
+        user_id -> Varchar,
+        name -> Varchar,
+        description -> Varchar,
+        created_at -> Timestamp,
+    }
+}
+
+table! {
     comments (id) {
         id -> Varchar,
         video_id -> Varchar,
@@ -53,6 +70,9 @@ table! {
     }
 }
 
+joinable!(collection_videos -> collections (collection_id));
+joinable!(collection_videos -> videos (video_id));
+joinable!(collections -> users (user_id));
 joinable!(comments -> users (user_id));
 joinable!(comments -> videos (video_id));
 joinable!(creators -> users (user_id));
@@ -61,6 +81,8 @@ joinable!(followers -> users (viewer_id));
 joinable!(videos -> users (uploader));
 
 allow_tables_to_appear_in_same_query!(
+    collection_videos,
+    collections,
     comments,
     creators,
     followers,

@@ -165,3 +165,9 @@ pub struct HasRatedDto {
 pub struct SearchVideoDto {
     pub term: String,
 }
+
+#[derive(Deserialize)]
+pub struct NewCollectionDto {
+    pub name: String,
+    pub description: String,
+}

@@ -37,6 +37,11 @@ pub fn configuration(cfg: &mut web::ServiceConfig) {
             .route("/videos", web::get().to(v::creator_videos)),
     )
     .service(
+        web::scope("/api/a/collection")
+            .route("/new", web::post().to(v::new_collection))
+            .wrap(HttpAuthentication::bearer(auth_validator)),
+    )
+    .service(
         web::scope("/api/auth")
             .route("/ping", web::get().to(c::ping))
             .route("/account", web::get().to(u::user_info))

@@ -7,6 +7,8 @@ use serde::Serialize;
 
 use crate::{
     common::models::ResolveMediaUrl,
+    schema::collection_videos,
+    schema::collections,
     schema::comments::{self, dsl::comments as all_comments},
     schema::ratings::{self, dsl::ratings as all_ratings},
     schema::users,
@@ -248,4 +250,51 @@ impl Rating {
         )
         .execute(conn)
     }
+}
+
+#[derive(Associations, Identifiable, Queryable, Serialize)]
+#[belongs_to(User)]
+pub struct Collection {
+    pub id: String,
+    #[serde(rename = "userId")]
+    pub user_id: String,
+    pub name: String,
+    pub description: String,
+    #[serde(rename = "createdAt")]
+    pub created_at: NaiveDateTime,
+}
+
+#[derive(Insertable)]
+#[table_name = "collections"]
+pub struct NewCollection {
+    pub id: String,
+    pub user_id: String,
+    pub name: String,
+    pub description: String,
+}
+
+impl NewCollection {
+    pub fn insert(self, conn: &PgConnection) -> QueryResult<Collection> {
+        self.insert_into(collections::table).get_result(conn)
+    }
+}
+
+impl Default for NewCollection {
+    fn default() -> Self {
+        Self {
+            id: uuid::Uuid::new_v4().to_simple().to_string(),
+            user_id: "".to_owned(),
+            name: "".to_owned(),
+            description: "".to_owned(),
+        }
+    }
+}
+
+#[derive(Associations, Identifiable, Insertable, Queryable)]
+#[belongs_to(Collection)]
+#[belongs_to(Video)]
+#[primary_key(collection_id, video_id)]
+pub struct CollectionVideo {
+    pub collection_id: String,
+    pub video_id: String,
 }
