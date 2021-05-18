@@ -51,9 +51,7 @@
     <Route path="/w/:videoId" let:params>
       <Watch videoId={params.videoId} />
     </Route>
-    <Route path="/search/:term" let:params>
-      <Search term={params.term} />
-    </Route>
+    <Route path="/search" component={Search} />
     <Route path="/">
       <Home />
     </Route>

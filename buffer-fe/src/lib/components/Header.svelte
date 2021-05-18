@@ -35,7 +35,7 @@
     navs = pubNavs;
   }
   const searchHandler = () => {
-    navigate(`/search/${searchTerm}`);
+    navigate(`/search?term=${searchTerm}`);
   };
 </script>
 
