@@ -74,8 +74,8 @@ impl Video {
     ) -> QueryResult<Vec<(Video, User)>> {
         use crate::schema::videos::dsl::{created_at, description, title};
         all_videos
-            .filter(title.like(format!("%{}%", term)))
-            .or_filter(description.like(format!("%{}%", term)))
+            .filter(title.ilike(format!("%{}%", term)))
+            .or_filter(description.ilike(format!("%{}%", term)))
             .inner_join(users::table)
             .order_by(created_at.desc())
             .get_results(conn)
