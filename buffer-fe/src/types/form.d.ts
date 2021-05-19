@@ -24,3 +24,8 @@ export type UpdateProfileData = {
   email: string;
   displayName: string;
 };
+
+export type NewCollectionData = {
+  name: string;
+  description: string;
+};

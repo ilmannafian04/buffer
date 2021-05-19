@@ -7,3 +7,9 @@ export const authenticatedConfig = (): AxiosRequestConfig => {
     },
   };
 };
+
+export const jsonAuthedConfig = (): AxiosRequestConfig => {
+  const config = authenticatedConfig();
+  config.headers['Content-Type'] = 'application/json';
+  return config;
+};

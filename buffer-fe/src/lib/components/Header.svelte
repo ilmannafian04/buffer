@@ -28,6 +28,10 @@
       name: 'Upload',
       path: '/upload',
     },
+    {
+      name: 'Colelction',
+      path: '/collection',
+    },
   ];
   $: if ($userState.signedIn) {
     navs = [...pubNavs, ...authedNavs];

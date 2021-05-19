@@ -15,6 +15,7 @@
   import Upload from './lib/video/Upload.svelte';
   import Account from './lib/creator/Account.svelte';
   import Search from './lib/Search.svelte';
+  import Collection from './lib/collection/Collection.svelte';
 
   onMount(() => {
     let jwt = localStorage.getItem('jwt');
@@ -44,6 +45,9 @@
     </Route>
     <Route path="/account">
       <Account />
+    </Route>
+    <Route path="/collection/*">
+      <Collection />
     </Route>
     <Route path="/c/:userId" let:params>
       <Profile displayName={params.userId} />
