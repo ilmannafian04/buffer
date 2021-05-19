@@ -7,8 +7,8 @@ use serde::Serialize;
 
 use crate::{
     common::models::ResolveMediaUrl,
-    schema::collection_videos,
-    schema::collections,
+    schema::collection_videos::{self, dsl::collection_videos as all_collection_videos},
+    schema::collections::{self, dsl::collections as all_collections},
     schema::comments::{self, dsl::comments as all_comments},
     schema::ratings::{self, dsl::ratings as all_ratings},
     schema::users,
@@ -264,6 +264,12 @@ pub struct Collection {
     pub created_at: NaiveDateTime,
 }
 
+impl Collection {
+    pub fn find_by_id(conn: &PgConnection, c_id: &str) -> QueryResult<Collection> {
+        all_collections.find(c_id).get_result(conn)
+    }
+}
+
 #[derive(Insertable)]
 #[table_name = "collections"]
 pub struct NewCollection {
@@ -297,4 +303,17 @@ impl Default for NewCollection {
 pub struct CollectionVideo {
     pub collection_id: String,
     pub video_id: String,
+}
+
+impl CollectionVideo {
+    pub fn find_many_by_collection_join_video_join_user(
+        conn: &PgConnection,
+        c_id: &str,
+    ) -> QueryResult<Vec<(CollectionVideo, (Video, User))>> {
+        use crate::schema::collection_videos::dsl::collection_id;
+        all_collection_videos
+            .inner_join(all_videos.inner_join(users::table))
+            .filter(collection_id.eq(c_id))
+            .get_results(conn)
+    }
 }

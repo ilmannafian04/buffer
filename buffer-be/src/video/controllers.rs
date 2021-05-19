@@ -24,8 +24,8 @@ use super::{
     },
     models::{Comment, NewComment, NewVideo, Rating, Video},
 };
-use crate::video::dtos::NewCollectionDto;
-use crate::video::models::{Collection, NewCollection};
+use crate::video::dtos::{CollectionDetailDto, NewCollectionDto};
+use crate::video::models::{Collection, CollectionVideo, NewCollection};
 
 pub async fn upload_video(
     mut payload: Multipart,
@@ -377,6 +377,30 @@ pub async fn new_collection(
     let conn = pool.get().unwrap();
     match web::block(move || new_collection.insert(&conn)).await {
         Ok(c) => HttpResponse::Ok().json(c),
+        _ => HttpResponse::InternalServerError().finish(),
+    }
+}
+
+pub async fn collection_info(pool: web::Data<DbPool>, query: web::Query<IdQuery>) -> HttpResponse {
+    let conn = pool.get().unwrap();
+    let collection = match web::block(move || Collection::find_by_id(&conn, &query.id)).await {
+        Ok(c) => c,
+        Err(BlockingError::Error(Error::NotFound)) => return HttpResponse::NotFound().finish(),
+        _ => return HttpResponse::InternalServerError().finish(),
+    };
+    let conn = pool.get().unwrap();
+    let id_closure = collection.id.clone();
+    match web::block(move || {
+        CollectionVideo::find_many_by_collection_join_video_join_user(&conn, &id_closure)
+    })
+    .await
+    {
+        Ok(t) => HttpResponse::Ok().json(CollectionDetailDto::from((
+            collection,
+            t.into_iter()
+                .map(|tuple| tuple.1)
+                .collect::<Vec<(Video, User)>>(),
+        ))),
         _ => HttpResponse::InternalServerError().finish(),
     }
 }

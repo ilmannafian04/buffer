@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { NewCollectionData } from '../../types/form';
   import { newCollection } from '../../api/videoApi';
+  import { navigate } from 'svelte-routing';
 
   let isSubmitting = false;
   let formData: NewCollectionData = {
@@ -10,7 +11,7 @@
   let submitHandler = () => {
     if (!isSubmitting) {
       newCollection(formData)
-        .then((value) => console.log(value.data))
+        .then((value) => navigate(`/collection/${value.data['id']}`))
         .catch((err) => console.error(err));
     }
   };
@@ -26,5 +27,7 @@
     <!-- prettier-ignore -->
     <textarea class="textarea" bind:value={formData.description}></textarea>
   </div>
-  <button class="button is-primary" class:is-loading={isSubmitting} type="submit">Submit</button>
+  <div class="control">
+    <button class="button is-primary" class:is-loading={isSubmitting} type="submit">Submit</button>
+  </div>
 </form>
