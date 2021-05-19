@@ -32,7 +32,7 @@
 </script>
 
 <Header />
-<div class="container mb-2">
+<div class="container my-2">
   <Router url={''}>
     <Route path="/signup">
       <Signup />

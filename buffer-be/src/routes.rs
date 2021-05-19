@@ -39,6 +39,7 @@ pub fn configuration(cfg: &mut web::ServiceConfig) {
     .service(
         web::scope("/api/a/collection")
             .route("/new", web::post().to(v::new_collection))
+            .route("/byme", web::get().to(v::users_collection))
             .wrap(HttpAuthentication::bearer(auth_validator)),
     )
     .service(web::scope("/api/collection").route("/detail", web::get().to(v::collection_info)))

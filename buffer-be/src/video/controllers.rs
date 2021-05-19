@@ -24,7 +24,7 @@ use super::{
     },
     models::{Comment, NewComment, NewVideo, Rating, Video},
 };
-use crate::video::dtos::{CollectionDetailDto, NewCollectionDto};
+use crate::video::dtos::{CollectionDetailDto, CollectionDto, NewCollectionDto};
 use crate::video::models::{Collection, CollectionVideo, NewCollection};
 
 pub async fn upload_video(
@@ -381,7 +381,11 @@ pub async fn new_collection(
     }
 }
 
-pub async fn collection_info(pool: web::Data<DbPool>, query: web::Query<IdQuery>) -> HttpResponse {
+pub async fn collection_info(
+    pool: web::Data<DbPool>,
+    query: web::Query<IdQuery>,
+    config: web::Data<Config>,
+) -> HttpResponse {
     let conn = pool.get().unwrap();
     let collection = match web::block(move || Collection::find_by_id(&conn, &query.id)).await {
         Ok(c) => c,
@@ -398,9 +402,53 @@ pub async fn collection_info(pool: web::Data<DbPool>, query: web::Query<IdQuery>
         Ok(t) => HttpResponse::Ok().json(CollectionDetailDto::from((
             collection,
             t.into_iter()
-                .map(|tuple| tuple.1)
+                .map(|mut tuple| {
+                    tuple.1 .0.resolve(&config.media_base_url);
+                    tuple.1
+                })
                 .collect::<Vec<(Video, User)>>(),
         ))),
         _ => HttpResponse::InternalServerError().finish(),
     }
+}
+
+pub async fn users_collection(pool: web::Data<DbPool>, req: HttpRequest) -> HttpResponse {
+    let ext = req.head().extensions();
+    let user = ext.get::<User>().unwrap();
+    let conn = pool.get().unwrap();
+    let id_closure = user.id.clone();
+    let tuples =
+        match web::block(move || Collection::find_by_user_join_video(&conn, &id_closure)).await {
+            Ok(rows) => rows
+                .into_iter()
+                .map(|row| {
+                    (
+                        row.0,
+                        match row.1 {
+                            Some(t) => Some(t.1),
+                            None => None,
+                        },
+                    )
+                })
+                .collect::<Vec<(Collection, Option<Video>)>>(),
+            _ => return HttpResponse::InternalServerError().finish(),
+        };
+    let mut result: Vec<CollectionDto> = Vec::new();
+    let mut temp_dto = CollectionDto::default();
+    for tuple in tuples {
+        let (c, v) = tuple;
+        if c.id != temp_dto.id {
+            if temp_dto.id != "" {
+                result.push(temp_dto);
+            }
+            temp_dto = CollectionDto::from(c);
+        }
+        if v.is_some() {
+            temp_dto.videos.push(v.unwrap());
+        }
+    }
+    if temp_dto.id != "" {
+        result.push(temp_dto);
+    }
+    HttpResponse::Ok().json(result)
 }

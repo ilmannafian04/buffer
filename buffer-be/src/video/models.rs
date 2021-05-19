@@ -268,6 +268,17 @@ impl Collection {
     pub fn find_by_id(conn: &PgConnection, c_id: &str) -> QueryResult<Collection> {
         all_collections.find(c_id).get_result(conn)
     }
+
+    pub fn find_by_user_join_video(
+        conn: &PgConnection,
+        u_id: &str,
+    ) -> QueryResult<Vec<(Collection, Option<(CollectionVideo, Video)>)>> {
+        use crate::schema::collections::dsl::user_id;
+        all_collections
+            .filter(user_id.eq(u_id))
+            .left_join(all_collection_videos.inner_join(videos::table))
+            .get_results(conn)
+    }
 }
 
 #[derive(Insertable)]

@@ -190,3 +190,33 @@ impl From<(Collection, Vec<(Video, User)>)> for CollectionDetailDto {
         }
     }
 }
+
+#[derive(Serialize)]
+pub struct CollectionDto {
+    pub id: String,
+    pub name: String,
+    pub description: String,
+    pub videos: Vec<Video>,
+}
+
+impl From<Collection> for CollectionDto {
+    fn from(c: Collection) -> Self {
+        Self {
+            id: c.id,
+            name: c.name,
+            description: c.description,
+            videos: vec![],
+        }
+    }
+}
+
+impl Default for CollectionDto {
+    fn default() -> Self {
+        Self {
+            id: "".to_string(),
+            name: "".to_string(),
+            description: "".to_string(),
+            videos: vec![],
+        }
+    }
+}

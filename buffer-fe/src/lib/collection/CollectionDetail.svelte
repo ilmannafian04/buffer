@@ -14,8 +14,16 @@
 
 <div class="is-size-2">{collectionDetail.name}</div>
 <span>{collectionDetail.description}</span>
-<div>
+<div class="video-section">
   {#each collectionDetail.videos as video (video.id)}
-    <ListVideo {video} />
+    <div class="m-2"><ListVideo {video} /></div>
   {/each}
 </div>
+
+<style>
+  .video-section {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+  }
+</style>
