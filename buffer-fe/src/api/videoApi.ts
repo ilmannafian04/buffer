@@ -1,7 +1,7 @@
 import axios from 'axios';
+
 import { authenticatedConfig, jsonAuthedConfig } from './commonApi';
-import type { ListVideoDTO } from '../types/dto';
-import type { NewCollectionData, NewCommentData } from '../types/form';
+import type { ListVideoDTO, NewCollectionData, NewCommentData } from '../types';
 
 export const uploadVideo = (data: FormData) => {
   let config = authenticatedConfig();
@@ -17,8 +17,8 @@ export const getVideoDetail = (id: string) => {
   return axios.get('/api/video/detail', { params: { id } });
 };
 
-export const getCommentsInVideo = (id: string) => {
-  return axios.get('/api/video/comments', { params: { id } });
+export const getCommentsInVideo = (id: string, skip = 0) => {
+  return axios.get('/api/video/comments', { params: { id, skip } });
 };
 
 export const newComment = (data: NewCommentData) => {

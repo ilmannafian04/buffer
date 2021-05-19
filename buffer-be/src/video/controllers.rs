@@ -199,6 +199,9 @@ pub async fn video_comments(
     pool: web::Data<DbPool>,
     query: web::Query<IndexRequestDto>,
 ) -> HttpResponse {
+    if query.validate().is_err() {
+        return HttpResponse::BadRequest().finish();
+    };
     let conn = pool.get().unwrap();
     let id_closure = query.id.clone();
     let video = match web::block(move || Video::find_by_id(&conn, &id_closure)).await {
@@ -207,7 +210,9 @@ pub async fn video_comments(
         _ => return HttpResponse::InternalServerError().finish(),
     };
     let conn = pool.get().unwrap();
-    match web::block(move || Comment::find_many_by_video_join_user(&conn, &video.id)).await {
+    match web::block(move || Comment::find_many_by_video_join_user(&conn, &video.id, query.skip))
+        .await
+    {
         Ok(tuples) => HttpResponse::Ok().json(
             tuples
                 .into_iter()

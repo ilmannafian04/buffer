@@ -7,8 +7,7 @@
 
   import { getCommentsInVideo, newComment } from '../../api/videoApi';
   import { userState } from '../../store/authStore';
-  import type { CommentDTO, NewCommentDTO } from '../../types/dto';
-  import type { NewCommentData } from '../../types/form';
+  import type { CommentDTO, NewCommentDTO, NewCommentData } from '../../types';
   import { parseDate } from '../../util/stringUtil';
 
   export let videoId: string;
@@ -39,13 +38,14 @@
       navigate('/signin');
     }
   };
-  $: {
-    commentData = { ...commentData, videoId: videoId ? videoId : '' };
-  }
-  onMount(() => {
-    getCommentsInVideo(videoId)
-      .then((value: AxiosResponse<CommentDTO[]>) => (comments = value.data))
+  $: commentData = { ...commentData, videoId: videoId ? videoId : '' };
+  const loadMoreComments = (skip: number) => {
+    getCommentsInVideo(videoId, skip)
+      .then((value: AxiosResponse<CommentDTO[]>) => (comments = [...comments, ...value.data]))
       .catch((err) => console.error(err));
+  };
+  onMount(() => {
+    loadMoreComments(0);
   });
 </script>
 
@@ -81,6 +81,7 @@
     </li>
   {/each}
 </ul>
+<button class="button is-primary" on:click={() => loadMoreComments(comments.length)}>Load more</button>
 
 <style lang="postcss">
   .comment {

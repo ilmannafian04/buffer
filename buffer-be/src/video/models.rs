@@ -163,12 +163,15 @@ impl Comment {
     pub fn find_many_by_video_join_user(
         conn: &PgConnection,
         v_id: &str,
+        skip: i64,
     ) -> QueryResult<Vec<(Comment, Option<User>)>> {
         use crate::schema::comments::dsl::{created_at, video_id};
         all_comments
             .filter(video_id.eq(v_id))
             .left_outer_join(users::table)
             .order_by(created_at.desc())
+            .offset(skip)
+            .limit(5)
             .get_results(conn)
     }
 }
