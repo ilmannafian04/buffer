@@ -345,9 +345,7 @@ pub async fn search_videos(
     config: web::Data<Config>,
 ) -> HttpResponse {
     let conn = pool.get().unwrap();
-    match web::block(move || Video::find_many_by_title_or_description_join_user(&conn, &query.term))
-        .await
-    {
+    match web::block(move || Video::find_many_by_title_fuzzy(&conn, &query.term)).await {
         Ok(videos) => HttpResponse::Ok().json(
             videos
                 .into_iter()

@@ -1,6 +1,10 @@
 use chrono::NaiveDateTime;
 use diesel::{
-    prelude::*, result::DatabaseErrorKind, result::Error, PgConnection, QueryResult, RunQueryDsl,
+    prelude::*,
+    result::DatabaseErrorKind,
+    result::Error,
+    sql_types::{Float, Text},
+    PgConnection, QueryResult, RunQueryDsl,
 };
 use rand::Rng;
 use serde::{Deserialize, Serialize};
@@ -27,6 +31,8 @@ pub struct Video {
     pub thumbnail_path: String,
     pub created_at: NaiveDateTime,
 }
+
+sql_function!(fn similarity(x: Text, y: Text) -> Float);
 
 impl Video {
     pub fn find_all(conn: &PgConnection) -> QueryResult<Vec<Video>> {
@@ -70,16 +76,15 @@ impl Video {
             .get_results(conn)
     }
 
-    pub fn find_many_by_title_or_description_join_user(
+    pub fn find_many_by_title_fuzzy(
         conn: &PgConnection,
         term: &str,
     ) -> QueryResult<Vec<(Video, User)>> {
-        use crate::schema::videos::dsl::{created_at, description, title};
+        use crate::schema::videos::title;
         all_videos
-            .filter(title.ilike(format!("%{}%", term)))
-            .or_filter(description.ilike(format!("%{}%", term)))
             .inner_join(users::table)
-            .order_by(created_at.desc())
+            .filter(similarity(title, term).gt(0.0))
+            .order_by(similarity(title, term).desc())
             .get_results(conn)
     }
 }
