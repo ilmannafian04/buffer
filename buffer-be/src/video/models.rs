@@ -3,7 +3,7 @@ use diesel::{
     prelude::*, result::DatabaseErrorKind, result::Error, PgConnection, QueryResult, RunQueryDsl,
 };
 use rand::Rng;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     common::models::ResolveMediaUrl,
@@ -279,6 +279,18 @@ impl Collection {
             .left_join(all_collection_videos.inner_join(videos::table))
             .get_results(conn)
     }
+
+    pub fn find_by_id_and_user(
+        conn: &PgConnection,
+        c_id: &str,
+        u_id: &str,
+    ) -> QueryResult<Collection> {
+        use crate::schema::collections::dsl::{id, user_id};
+        all_collections
+            .filter(id.eq(c_id))
+            .filter(user_id.eq(u_id))
+            .get_result(conn)
+    }
 }
 
 #[derive(Insertable)]
@@ -307,16 +319,22 @@ impl Default for NewCollection {
     }
 }
 
-#[derive(Associations, Identifiable, Insertable, Queryable)]
+#[derive(Associations, Deserialize, Identifiable, Insertable, Queryable)]
 #[belongs_to(Collection)]
 #[belongs_to(Video)]
 #[primary_key(collection_id, video_id)]
 pub struct CollectionVideo {
+    #[serde(rename = "collectionId")]
     pub collection_id: String,
+    #[serde(rename = "videoId")]
     pub video_id: String,
 }
 
 impl CollectionVideo {
+    pub fn insert(self, conn: &PgConnection) -> QueryResult<CollectionVideo> {
+        self.insert_into(collection_videos::table).get_result(conn)
+    }
+
     pub fn find_many_by_collection_join_video_join_user(
         conn: &PgConnection,
         c_id: &str,

@@ -1,8 +1,10 @@
 <script lang="ts">
-  import { navigate, Route, Router } from 'svelte-routing';
-  import NewCollection from './NewCollection.svelte';
-  import CollectionDetail from './CollectionDetail.svelte';
   import { onMount } from 'svelte';
+  import { navigate, Route, Router } from 'svelte-routing';
+
+  import AddVideoToCollection from './AddVideoToCollection.svelte';
+  import CollectionDetail from './CollectionDetail.svelte';
+  import NewCollection from './NewCollection.svelte';
   import { getMyCollections } from '../../api/collectionApi';
   import type { Collection } from '../../types';
 
@@ -19,6 +21,7 @@
   <Route path="/new">
     <NewCollection />
   </Route>
+  <Route path="/add" component={AddVideoToCollection} />
   <Route path="/:collectionId" let:params>
     <CollectionDetail collectionId={params['collectionId']} />
   </Route>

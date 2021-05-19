@@ -3,12 +3,12 @@
   // noinspection TypeScriptCheckImport
   import { Icon } from 'svelma';
   import { onMount } from 'svelte';
-  import { Link } from 'svelte-routing';
+  import { Link, navigate } from 'svelte-routing';
 
   import CommentSection from './CommentSection.svelte';
   import { getVideoDetail, getVideoRating, hasRated, rateVideo } from '../../api/videoApi';
   import { userState } from '../../store/authStore';
-  import type { HasRatedDTO, VideoDetailDTO, VideoRatingDTO } from '../../types/dto';
+  import type { HasRatedDTO, VideoDetailDTO, VideoRatingDTO } from '../../types';
   import ShareToTwitter from '../components/ShareToTwitter.svelte';
 
   export let videoId;
@@ -96,14 +96,21 @@
 <div>
   <div class="is-size-4">{video.title}</div>
   <div class="creator-detail">
-    <div><Link to="/c/{video.uploaderUsername}">{video.uploader}</Link> uploaded on {date}</div>
+    <div>
+      <Link to="/c/{video.uploaderUsername}">{video.uploader}</Link>
+      uploaded on {date}
+    </div>
     <div class="info-right">
+      <span class="icon is-medium icon-button" on:click={() => navigate(`/collection/add?id=${videoId}`)}>
+        <!-- prettier-ignore -->
+        <i class="fa fa-plus" aria-hidden="true"></i>
+      </span>
       <ShareToTwitter title={video.title} />
-      <div class="rating-button" class:has-text-primary={userHasRated.hasRated && !userHasRated.isDislike}>
+      <div class="icon-button" class:has-text-primary={userHasRated.hasRated && !userHasRated.isDislike}>
         <Icon pack="fa" size="is-medium" icon="thumbs-up" on:click={() => ratingHandler(false)} />
       </div>
       {rating.like}/{rating.dislike}
-      <div class="rating-button" class:has-text-primary={userHasRated.hasRated && userHasRated.isDislike}>
+      <div class="icon-button" class:has-text-primary={userHasRated.hasRated && userHasRated.isDislike}>
         <Icon pack="fa" size="is-medium" icon="thumbs-down" on:click={() => ratingHandler(true)} />
       </div>
     </div>
@@ -121,14 +128,17 @@
     align-items: center;
     justify-content: space-between;
   }
+
   .divider {
     border-top: 1px solid #bbb;
   }
+
   .info-right {
     display: flex;
     align-items: center;
   }
-  .rating-button {
+
+  .icon-button {
     cursor: pointer;
   }
 </style>

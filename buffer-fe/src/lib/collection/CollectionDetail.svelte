@@ -1,7 +1,7 @@
 <script lang="ts">
+  import ListVideo from '../components/ListVideo.svelte';
   import { getCollectionDetail } from '../../api/collectionApi';
   import type { CollectionDetailDTO } from '../../types';
-  import ListVideo from '../components/ListVideo.svelte';
 
   export let collectionId;
   let collectionDetail: CollectionDetailDTO = { description: '', name: '', videos: [] };

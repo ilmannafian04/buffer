@@ -1,7 +1,8 @@
 <script lang="ts">
-  import type { NewCollectionData } from '../../types/form';
-  import { newCollection } from '../../api/videoApi';
   import { navigate } from 'svelte-routing';
+
+  import { newCollection } from '../../api/videoApi';
+  import type { NewCollectionData } from '../../types';
 
   let isSubmitting = false;
   let formData: NewCollectionData = {

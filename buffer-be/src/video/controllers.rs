@@ -2,10 +2,17 @@ use std::{io::Write, path::Path};
 
 use actix_multipart::Multipart;
 use actix_web::{error::BlockingError, web, HttpRequest, HttpResponse, ResponseError};
-use diesel::result::Error;
+use diesel::result::{DatabaseErrorKind, Error};
 use futures::TryStreamExt;
 use validator::Validate;
 
+use super::{
+    dtos::{
+        CommentDto, HasRatedDto, NewCommentDto, NewVideoDto, RateVideoRequest, SearchVideoDto,
+        VideoDetailDto, VideoListDto, VideoListResponseDto, VideoRatingDto,
+    },
+    models::{Comment, NewComment, NewVideo, Rating, Video},
+};
 use crate::{
     common::{
         dtos::{IdQuery, IndexRequestDto},
@@ -15,17 +22,11 @@ use crate::{
     },
     config::Config,
     user::{dtos::CreatorLookUpDto, models::User},
-};
-
-use super::{
-    dtos::{
-        CommentDto, HasRatedDto, NewCommentDto, NewVideoDto, RateVideoRequest, SearchVideoDto,
-        VideoDetailDto, VideoListDto, VideoListResponseDto, VideoRatingDto,
+    video::{
+        dtos::{CollectionDetailDto, CollectionDto, NewCollectionDto},
+        models::{Collection, CollectionVideo, NewCollection},
     },
-    models::{Comment, NewComment, NewVideo, Rating, Video},
 };
-use crate::video::dtos::{CollectionDetailDto, CollectionDto, NewCollectionDto};
-use crate::video::models::{Collection, CollectionVideo, NewCollection};
 
 pub async fn upload_video(
     mut payload: Multipart,
@@ -438,7 +439,7 @@ pub async fn users_collection(pool: web::Data<DbPool>, req: HttpRequest) -> Http
     for tuple in tuples {
         let (c, v) = tuple;
         if c.id != temp_dto.id {
-            if temp_dto.id != "" {
+            if !temp_dto.id.is_empty() {
                 result.push(temp_dto);
             }
             temp_dto = CollectionDto::from(c);
@@ -447,8 +448,44 @@ pub async fn users_collection(pool: web::Data<DbPool>, req: HttpRequest) -> Http
             temp_dto.videos.push(v.unwrap());
         }
     }
-    if temp_dto.id != "" {
+    if !temp_dto.id.is_empty() {
         result.push(temp_dto);
     }
     HttpResponse::Ok().json(result)
+}
+
+pub async fn add_video_to_collection(
+    pool: web::Data<DbPool>,
+    req: HttpRequest,
+    payload: web::Json<CollectionVideo>,
+) -> HttpResponse {
+    let ext = req.head().extensions();
+    let user = ext.get::<User>().unwrap();
+    let conn = pool.get().unwrap();
+    let tuple_closure = (payload.collection_id.clone(), user.id.clone());
+    match web::block(move || {
+        Collection::find_by_id_and_user(&conn, &tuple_closure.0, &tuple_closure.1)
+    })
+    .await
+    {
+        Err(BlockingError::Error(Error::NotFound)) => return HttpResponse::Forbidden().finish(),
+        Err(_) => return HttpResponse::InternalServerError().finish(),
+        _ => (),
+    };
+    let conn = pool.get().unwrap();
+    let payload_closure = CollectionVideo {
+        collection_id: payload.collection_id.clone(),
+        video_id: payload.video_id.clone(),
+    };
+    match web::block(move || payload_closure.insert(&conn)).await {
+        Ok(_)
+        | Err(BlockingError::Error(Error::DatabaseError(DatabaseErrorKind::UniqueViolation, _))) => {
+            HttpResponse::Ok().finish()
+        }
+        Err(BlockingError::Error(Error::DatabaseError(
+            DatabaseErrorKind::ForeignKeyViolation,
+            _,
+        ))) => HttpResponse::NotFound().finish(),
+        _ => HttpResponse::InternalServerError().finish(),
+    }
 }
