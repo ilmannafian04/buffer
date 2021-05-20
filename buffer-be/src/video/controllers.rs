@@ -387,11 +387,12 @@ pub async fn new_collection(
 
 pub async fn collection_info(
     pool: web::Data<DbPool>,
-    query: web::Query<IdQuery>,
+    query: web::Query<IndexRequestDto>,
     config: web::Data<Config>,
 ) -> HttpResponse {
     let conn = pool.get().unwrap();
-    let collection = match web::block(move || Collection::find_by_id(&conn, &query.id)).await {
+    let id_closure = query.id.clone();
+    let collection = match web::block(move || Collection::find_by_id(&conn, &id_closure)).await {
         Ok(c) => c,
         Err(BlockingError::Error(Error::NotFound)) => return HttpResponse::NotFound().finish(),
         _ => return HttpResponse::InternalServerError().finish(),
@@ -399,7 +400,11 @@ pub async fn collection_info(
     let conn = pool.get().unwrap();
     let id_closure = collection.id.clone();
     match web::block(move || {
-        CollectionVideo::find_many_by_collection_join_video_join_user(&conn, &id_closure)
+        CollectionVideo::find_many_by_collection_join_video_join_user(
+            &conn,
+            &id_closure,
+            query.skip,
+        )
     })
     .await
     {

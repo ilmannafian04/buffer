@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { authenticatedConfig, jsonAuthedConfig } from './commonApi';
 
-export const getCollectionDetail = (id: string) => {
-  return axios.get('/api/collection/detail', { params: { id } });
+export const getCollectionDetail = (id: string, skip = 0) => {
+  return axios.get('/api/collection/detail', { params: { id, skip } });
 };
 
 export const getMyCollections = () => {

@@ -346,11 +346,14 @@ impl CollectionVideo {
     pub fn find_many_by_collection_join_video_join_user(
         conn: &PgConnection,
         c_id: &str,
+        skip: i64,
     ) -> QueryResult<Vec<(CollectionVideo, (Video, User))>> {
         use crate::schema::collection_videos::dsl::collection_id;
         all_collection_videos
             .inner_join(all_videos.inner_join(users::table))
             .filter(collection_id.eq(c_id))
+            .limit(5)
+            .offset(skip)
             .get_results(conn)
     }
 }
