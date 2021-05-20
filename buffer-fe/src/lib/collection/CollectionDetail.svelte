@@ -6,6 +6,7 @@
   import ListVideo from '../components/ListVideo.svelte';
   import { getCollectionDetail } from '../../api/collectionApi';
   import type { CollectionDetailDTO } from '../../types';
+  import VideoRow from '../components/VideoRow.svelte';
 
   export let collectionId;
   let collectionDetail: CollectionDetailDTO = { description: '', name: '', videos: [] };
@@ -14,14 +15,13 @@
     if (!loadIsFinished) {
       getCollectionDetail(collectionId, collectionDetail.videos.length)
         .then((value: AxiosResponse<CollectionDetailDTO>) => {
-          if (value.data.videos.length === 0) {
+          if (value.data.videos.length < 5) {
             loadIsFinished = true;
-          } else {
-            collectionDetail = {
-              ...value.data,
-              videos: [...collectionDetail.videos, ...value.data.videos],
-            };
           }
+          collectionDetail = {
+            ...value.data,
+            videos: [...collectionDetail.videos, ...value.data.videos],
+          };
         })
         .catch((err) => console.error(err));
     }
@@ -33,7 +33,7 @@
 <span>{collectionDetail.description}</span>
 <div>
   {#each collectionDetail.videos as video (video.id)}
-    <div class="m-2"><ListVideo {video} /></div>
+    <div class="m-2"><VideoRow {video} /></div>
   {/each}
   <InfiniteScroll window={true} hasMore={!loadIsFinished} on:loadMore={() => loadMore()} />
 </div>
