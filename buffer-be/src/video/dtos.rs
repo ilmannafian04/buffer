@@ -19,6 +19,8 @@ pub struct NewCommentDto {
     #[serde(rename = "videoId")]
     pub video_id: String,
     pub content: String,
+    #[serde(rename = "isAnonymous")]
+    pub is_anonymous: bool,
 }
 
 #[non_exhaustive]
@@ -124,12 +126,19 @@ pub struct CommentDto {
     pub user_display_name: String,
     #[serde(rename = "username")]
     pub username: String,
+    #[serde(rename = "isAnonymous")]
+    pub is_anonymous: bool,
 }
 
 impl From<(Comment, Option<User>)> for CommentDto {
     fn from(tuple: (Comment, Option<User>)) -> Self {
         let (c, u) = tuple;
-        let u = u.unwrap();
+        let mut u = u.unwrap();
+        if c.is_anonymous {
+            u.id = "".to_owned();
+            u.display_name = "Anonymous".to_owned();
+            u.username = "".to_owned();
+        }
         Self {
             id: c.id,
             content: c.content,
@@ -137,6 +146,7 @@ impl From<(Comment, Option<User>)> for CommentDto {
             user_id: u.id,
             user_display_name: u.display_name,
             username: u.username,
+            is_anonymous: c.is_anonymous,
         }
     }
 }

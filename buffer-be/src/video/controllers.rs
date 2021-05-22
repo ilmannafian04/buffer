@@ -136,7 +136,9 @@ pub async fn new_comment(
     payload: web::Json<NewCommentDto>,
     req: HttpRequest,
 ) -> HttpResponse {
-    let u_id = req.head().extensions().get::<User>().unwrap().id.clone();
+    let ext = req.head().extensions();
+    let user = ext.get::<User>().unwrap();
+    let u_id = user.id.clone();
     let conn = pool.get().unwrap();
     let v_id_closure = payload.video_id.clone();
     let video = match web::block(move || Video::find_by_id(&conn, &v_id_closure)).await {
@@ -149,10 +151,12 @@ pub async fn new_comment(
         user_id: u_id,
         video_id: video.id.clone(),
         content: payload.content.clone(),
+        is_anonymous: payload.is_anonymous,
         ..Default::default()
     };
+    let user_closure = user.clone();
     match web::block(move || new_comment.insert(&conn)).await {
-        Ok(c) => HttpResponse::Ok().json(c),
+        Ok(c) => HttpResponse::Ok().json(CommentDto::from((c, Some(user_closure)))),
         _ => HttpResponse::InternalServerError().finish(),
     }
 }

@@ -37,14 +37,7 @@ export type CommentDTO = {
   userId: string;
   userDisplayName: string;
   username: string;
-};
-
-export type NewCommentDTO = {
-  id: string;
-  videoId: string;
-  userId: string;
-  content: string;
-  createdAt: string;
+  isAnonymous: boolean;
 };
 
 export type VideoRatingDTO = {

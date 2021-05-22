@@ -18,7 +18,7 @@ pub enum UniqueViolationKind {
     Username,
 }
 
-#[derive(Identifiable, Queryable, Serialize)]
+#[derive(Clone, Identifiable, Queryable, Serialize)]
 pub struct User {
     pub id: String,
     pub email: String,
@@ -145,11 +145,7 @@ pub struct Follower {
 }
 
 impl Follower {
-    pub fn delete(
-        conn: &PgConnection,
-        creator_id: &str,
-        user_id: &str,
-    ) -> QueryResult<usize> {
+    pub fn delete(conn: &PgConnection, creator_id: &str, user_id: &str) -> QueryResult<usize> {
         diesel::delete(
             all_followers
                 .filter(followers::dsl::creator_id.eq(creator_id))

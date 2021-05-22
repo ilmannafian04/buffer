@@ -18,6 +18,7 @@ export type UploadFormData = {
 export type NewCommentData = {
   videoId: string;
   content: string;
+  isAnonymous: boolean;
 };
 
 export type UpdateProfileData = {

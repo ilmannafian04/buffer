@@ -157,6 +157,7 @@ pub struct Comment {
     pub content: String,
     #[serde(rename = "createdAt")]
     pub created_at: NaiveDateTime,
+    #[serde(rename = "isAnonymous")]
     pub is_anonymous: bool,
 }
 
