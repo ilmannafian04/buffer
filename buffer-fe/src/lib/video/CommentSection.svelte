@@ -1,7 +1,7 @@
 <script lang="ts">
   import { AxiosResponse } from 'axios';
   // noinspection TypeScriptCheckImport
-  import { Button, Field, Icon, Input } from 'svelma';
+  import { Field, Icon, Input } from 'svelma';
   import { onMount } from 'svelte';
   import { Link, navigate } from 'svelte-routing';
 

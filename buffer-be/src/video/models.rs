@@ -27,8 +27,11 @@ pub struct Video {
     pub uploader: String,
     pub title: String,
     pub description: String,
+    #[serde(rename = "videoPath")]
     pub video_path: String,
+    #[serde(rename = "thumbnailPath")]
     pub thumbnail_path: String,
+    #[serde(rename = "createdAt")]
     pub created_at: NaiveDateTime,
 }
 
@@ -261,6 +264,23 @@ impl Rating {
                 .filter(user_id.eq(u_id)),
         )
         .execute(conn)
+    }
+
+    pub fn find_liked_join_video_and_user(
+        conn: &PgConnection,
+        u_id: &str,
+    ) -> QueryResult<Vec<(Rating, Video, User)>> {
+        use crate::schema::{
+            ratings::dsl::{is_dislike, user_id, video_id},
+            users::dsl::id as us_id,
+            videos::dsl::id as vid_id,
+        };
+        all_ratings
+            .filter(user_id.eq(u_id))
+            .filter(is_dislike.eq(false))
+            .inner_join(videos::table.on(vid_id.eq(video_id)))
+            .inner_join(users::table.on(us_id.eq(user_id)))
+            .get_results(conn)
     }
 }
 

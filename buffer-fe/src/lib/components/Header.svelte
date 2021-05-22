@@ -32,6 +32,10 @@
       name: 'Colelction',
       path: '/collection',
     },
+    {
+      name: 'Liked Videos',
+      path: '/liked',
+    },
   ];
   $: if ($userState.signedIn) {
     navs = [...pubNavs, ...authedNavs];

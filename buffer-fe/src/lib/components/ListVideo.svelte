@@ -1,7 +1,7 @@
 <script lang="ts">
   import { navigate } from 'svelte-routing';
 
-  import type { ListVideoDTO } from '../../types/dto';
+  import type { ListVideoDTO } from '../../types';
 
   export let video: ListVideoDTO;
   let date = '';

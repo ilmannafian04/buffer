@@ -230,3 +230,18 @@ impl Default for CollectionDto {
         }
     }
 }
+
+#[derive(Serialize)]
+pub struct VideoUserDTO {
+    pub user: User,
+    pub video: Video,
+}
+
+impl From<(Video, User)> for VideoUserDTO {
+    fn from(tuple: (Video, User)) -> Self {
+        Self {
+            user: tuple.1,
+            video: tuple.0,
+        }
+    }
+}

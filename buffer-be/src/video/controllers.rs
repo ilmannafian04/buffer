@@ -13,6 +13,7 @@ use super::{
     },
     models::{Comment, NewComment, NewVideo, Rating, Video},
 };
+use crate::video::dtos::VideoUserDTO;
 use crate::{
     common::{
         dtos::{IdQuery, IndexRequestDto},
@@ -498,6 +499,28 @@ pub async fn add_video_to_collection(
             DatabaseErrorKind::ForeignKeyViolation,
             _,
         ))) => HttpResponse::NotFound().finish(),
+        _ => HttpResponse::InternalServerError().finish(),
+    }
+}
+
+pub async fn get_liked_videos(
+    pool: web::Data<DbPool>,
+    req: HttpRequest,
+    config: web::Data<Config>,
+) -> HttpResponse {
+    let user = req.head().extensions().get::<User>().unwrap().clone();
+    match web::block(move || Rating::find_liked_join_video_and_user(&pool.get().unwrap(), &user.id))
+        .await
+    {
+        Ok(rows) => HttpResponse::Ok().json(
+            rows.into_iter()
+                .map(|row| {
+                    let (_, mut v, u) = row;
+                    v.resolve(&config.media_base_url);
+                    VideoUserDTO::from((v, u))
+                })
+                .collect::<Vec<VideoUserDTO>>(),
+        ),
         _ => HttpResponse::InternalServerError().finish(),
     }
 }

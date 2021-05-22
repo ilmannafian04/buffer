@@ -52,3 +52,7 @@ export const getVideoByCreator = (username: string) => {
 export const newCollection = (data: NewCollectionData) => {
   return axios.post('/api/a/collection/new', data, jsonAuthedConfig());
 };
+
+export const getLikedVideos = () => {
+  return axios.get('/api/a/video/liked', authenticatedConfig());
+};
