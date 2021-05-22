@@ -157,6 +157,7 @@ pub struct Comment {
     pub content: String,
     #[serde(rename = "createdAt")]
     pub created_at: NaiveDateTime,
+    pub is_anonymous: bool,
 }
 
 impl Comment {
@@ -183,6 +184,7 @@ pub struct NewComment {
     pub video_id: String,
     pub user_id: String,
     pub content: String,
+    pub is_anonymous: bool,
 }
 
 impl NewComment {
@@ -198,6 +200,7 @@ impl Default for NewComment {
             video_id: "".to_owned(),
             user_id: "".to_owned(),
             content: "".to_owned(),
+            is_anonymous: false,
         }
     }
 }

@@ -1,0 +1,1 @@
+ALTER TABLE comments ADD is_anonymous BOOL DEFAULT FALSE NOT NULL;

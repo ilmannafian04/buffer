@@ -22,6 +22,7 @@ table! {
         user_id -> Varchar,
         content -> Text,
         created_at -> Timestamp,
+        is_anonymous -> Bool,
     }
 }
 
