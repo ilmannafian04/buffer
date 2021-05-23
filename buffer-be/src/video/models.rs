@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use chrono::NaiveDateTime;
 use diesel::{
     prelude::*,
@@ -6,6 +8,7 @@ use diesel::{
     sql_types::{Float, Text},
     PgConnection, QueryResult, RunQueryDsl,
 };
+use image::{io::Reader, GenericImageView, ImageResult};
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 
@@ -132,6 +135,22 @@ impl NewVideo {
             .take(16)
             .map(char::from)
             .collect()
+    }
+
+    pub fn crop_thumbnail(thumbnail_path: &Path) -> ImageResult<()> {
+        let thumbnail_file = Reader::open(thumbnail_path)?
+            .with_guessed_format()?
+            .decode()?;
+        let (original_w, original_h) = thumbnail_file.dimensions();
+        let (x, y, w, h) = if original_w / 16 >= original_h / 9 {
+            let new_w = original_h / 9 * 16;
+            ((original_w - new_w) / 2, 0, new_w, original_h)
+        } else {
+            let new_h = original_w / 16 * 9;
+            (0, (original_h - new_h) / 2, original_w, new_h)
+        };
+        let cropped = thumbnail_file.crop_imm(x, y, w, h);
+        cropped.save(thumbnail_path)
     }
 }
 

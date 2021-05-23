@@ -1,7 +1,7 @@
 use std::{io::Write, path::Path};
 
 use actix_multipart::Multipart;
-use actix_web::{error::BlockingError, web, HttpRequest, HttpResponse, ResponseError};
+use actix_web::{error::BlockingError, web, HttpRequest, HttpResponse};
 use diesel::result::{DatabaseErrorKind, Error};
 use futures::TryStreamExt;
 use validator::Validate;
@@ -13,16 +13,15 @@ use super::{
     },
     models::{Comment, NewComment, NewVideo, Rating, Video},
 };
-use crate::video::dtos::VideoUserDTO;
 use crate::{
     common::{
         dtos::{IdQuery, IndexRequestDto},
-        errors::DatabaseError,
         models::ResolveMediaUrl,
         types::DbPool,
     },
     config::Config,
     user::{dtos::CreatorLookUpDto, models::User},
+    video::dtos::VideoUserDTO,
     video::{
         dtos::{CollectionDetailDto, CollectionDto, NewCollectionDto},
         models::{Collection, CollectionVideo, NewCollection},
@@ -35,8 +34,7 @@ pub async fn upload_video(
     pool: web::Data<DbPool>,
     config: web::Data<Config>,
 ) -> HttpResponse {
-    let extension = req.head().extensions();
-    let user = extension.get::<User>().unwrap();
+    let user = req.head().extensions().get::<User>().unwrap().clone();
     let mut new_video = NewVideo::default();
     let mut metadata_is_parsed = false;
     let mut video_is_saved = false;
@@ -99,7 +97,9 @@ pub async fn upload_video(
                 .join(&path_to_video_folder)
                 .join(&thumbnail_name);
             new_video.thumbnail_path = db_path.to_str().unwrap().to_owned();
-            let mut thumbnail = match web::block(move || std::fs::File::create(fs_path)).await {
+            let path_closure = fs_path.clone();
+            let mut thumbnail = match web::block(move || std::fs::File::create(path_closure)).await
+            {
                 Ok(f) => f,
                 Err(_) => return HttpResponse::InternalServerError().finish(),
             };
@@ -110,22 +110,23 @@ pub async fn upload_video(
                         Err(_) => return HttpResponse::InternalServerError().finish(),
                     }
             }
+            if web::block(move || NewVideo::crop_thumbnail(&fs_path))
+                .await
+                .is_err()
+            {
+                return HttpResponse::InternalServerError().finish();
+            }
             thumbnail_is_saved = true;
         }
     }
     if metadata_is_parsed && video_is_saved && thumbnail_is_saved {
-        match pool.get() {
-            Ok(conn) => {
-                let query = web::block(move || new_video.insert(&conn)).await;
-                match query {
-                    Ok(mut video) => {
-                        video.resolve(&config.media_base_url);
-                        HttpResponse::Ok().json(video)
-                    }
-                    Err(_) => HttpResponse::InternalServerError().finish(),
-                }
+        let conn = pool.get().unwrap();
+        match web::block(move || new_video.insert(&conn)).await {
+            Ok(mut video) => {
+                video.resolve(&config.media_base_url);
+                HttpResponse::Ok().json(video)
             }
-            Err(_) => return DatabaseError::PoolLockError.error_response(),
+            Err(_) => HttpResponse::InternalServerError().finish(),
         }
     } else {
         HttpResponse::BadRequest().finish()
