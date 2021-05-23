@@ -106,11 +106,13 @@
       uploaded on {date}
     </div>
     <div class="info-right">
-      {#if $userState.signedIn}
+      {#if $userState.user?.id === video.uploaderId}
         <span class="icon is-medium icon-button" on:click={handleDelete}>
           <!-- prettier-ignore -->
           <i class="fa fa-trash" aria-hidden="true"></i>
         </span>
+      {/if}
+      {#if $userState.signedIn}
         <span class="icon is-medium icon-button" on:click={() => navigate(`/collection/add?id=${videoId}`)}>
           <!-- prettier-ignore -->
           <i class="fa fa-plus" aria-hidden="true"></i>
