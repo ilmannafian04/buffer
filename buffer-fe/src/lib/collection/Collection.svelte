@@ -5,10 +5,15 @@
   import AddVideoToCollection from './AddVideoToCollection.svelte';
   import CollectionDetail from './CollectionDetail.svelte';
   import NewCollection from './NewCollection.svelte';
-  import { getMyCollections } from '../../api/collectionApi';
+  import { deleteCollection, getMyCollections } from '../../api/collectionApi';
   import type { Collection } from '../../types';
 
   let collections: Collection[] = [];
+  const deleteHandler = (id: string) => {
+    deleteCollection(id)
+      .then(() => (collections = collections.filter((collection) => collection.id !== id)))
+      .catch((err) => console.error(err));
+  };
 
   onMount(() => {
     getMyCollections()
@@ -32,6 +37,7 @@
         <div class="is-size-4">{collection.name} - {collection.videos.length} videos</div>
         <div>{collection.description}</div>
         <button class="button is-primary" on:click={() => navigate(`/collection/${collection.id}`)}>View</button>
+        <button class="button is-danger" on:click={() => deleteHandler(collection.id)}>Delete</button>
       </div>
     {/each}
   </Route>

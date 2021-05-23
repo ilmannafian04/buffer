@@ -1,4 +1,5 @@
 import axios from 'axios';
+
 import { authenticatedConfig, jsonAuthedConfig } from './commonApi';
 
 export const getCollectionDetail = (id: string, skip = 0) => {
@@ -11,4 +12,8 @@ export const getMyCollections = () => {
 
 export const addVideoToCollection = (collectionId: string, videoId: string) => {
   return axios.post('/api/a/collection/addvideo', { collectionId, videoId }, jsonAuthedConfig());
+};
+
+export const deleteCollection = (id: string) => {
+  return axios.post('/api/a/collection/delete', { id }, jsonAuthedConfig());
 };

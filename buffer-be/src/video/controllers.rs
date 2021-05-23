@@ -534,7 +534,7 @@ pub async fn delete_video(
     let user = req.head().extensions().get::<User>().unwrap().clone();
     let conn = pool.get().unwrap();
     let video = match web::block(move || Video::find_by_id(&conn, &payload.id)).await {
-        Ok(c) => c,
+        Ok(v) => v,
         Err(BlockingError::Error(Error::NotFound)) => return HttpResponse::NotFound().finish(),
         _ => return HttpResponse::InternalServerError().finish(),
     };
@@ -543,6 +543,28 @@ pub async fn delete_video(
     }
     let conn = pool.get().unwrap();
     match web::block(move || video.delete(&conn)).await {
+        Ok(_) => HttpResponse::Ok().finish(),
+        _ => HttpResponse::InternalServerError().finish(),
+    }
+}
+
+pub async fn delete_collection(
+    pool: web::Data<DbPool>,
+    req: HttpRequest,
+    payload: web::Json<IdQuery>,
+) -> HttpResponse {
+    let user = req.head().extensions().get::<User>().unwrap().clone();
+    let conn = pool.get().unwrap();
+    let collection = match web::block(move || Collection::find_by_id(&conn, &payload.id)).await {
+        Ok(c) => c,
+        Err(BlockingError::Error(Error::NotFound)) => return HttpResponse::NotFound().finish(),
+        _ => return HttpResponse::InternalServerError().finish(),
+    };
+    if collection.user_id != user.id {
+        return HttpResponse::Forbidden().finish();
+    }
+    let conn = pool.get().unwrap();
+    match web::block(move || collection.delete(&conn)).await {
         Ok(_) => HttpResponse::Ok().finish(),
         _ => HttpResponse::InternalServerError().finish(),
     }
