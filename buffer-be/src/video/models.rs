@@ -323,6 +323,7 @@ pub struct Collection {
     #[serde(rename = "createdAt")]
     pub created_at: NaiveDateTime,
 }
+type CollectionVideoUser = Vec<(Collection, Option<(CollectionVideo, Video)>)>;
 
 impl Collection {
     pub fn find_by_id(conn: &PgConnection, c_id: &str) -> QueryResult<Collection> {
@@ -332,7 +333,7 @@ impl Collection {
     pub fn find_by_user_join_video(
         conn: &PgConnection,
         u_id: &str,
-    ) -> QueryResult<Vec<(Collection, Option<(CollectionVideo, Video)>)>> {
+    ) -> QueryResult<CollectionVideoUser> {
         use crate::schema::collections::dsl::user_id;
         all_collections
             .filter(user_id.eq(u_id))

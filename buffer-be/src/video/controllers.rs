@@ -22,7 +22,7 @@ use crate::{
     config::Config,
     user::{dtos::CreatorLookUpDto, models::User},
     video::{
-        dtos::{CollectionDto, CollectionVideoUserDTO, NewCollectionDto, VideoUserDTO},
+        dtos::{CollectionDto, CollectionVideoUserDto, NewCollectionDto, VideoUserDto},
         models::{Collection, CollectionVideo, NewCollection},
     },
 };
@@ -169,9 +169,9 @@ pub async fn list_videos(pool: web::Data<DbPool>, config: web::Data<Config>) -> 
             v.into_iter()
                 .map(|mut t| {
                     t.0.resolve(&config.media_base_url);
-                    VideoUserDTO::from(t)
+                    VideoUserDto::from(t)
                 })
-                .collect::<Vec<VideoUserDTO>>(),
+                .collect::<Vec<VideoUserDto>>(),
         ),
         Err(_) => return HttpResponse::InternalServerError().finish(),
     }
@@ -334,9 +334,9 @@ pub async fn creator_videos(
                 .map(|tuple| {
                     let (mut v, u) = tuple;
                     v.resolve(&config.media_base_url);
-                    VideoUserDTO::from((v, u))
+                    VideoUserDto::from((v, u))
                 })
-                .collect::<Vec<VideoUserDTO>>(),
+                .collect::<Vec<VideoUserDto>>(),
         ),
         _ => return HttpResponse::InternalServerError().finish(),
     }
@@ -355,9 +355,9 @@ pub async fn search_videos(
                 .map(|tuple| {
                     let (mut v, u) = tuple;
                     v.resolve(&config.media_base_url);
-                    VideoUserDTO::from((v, u))
+                    VideoUserDto::from((v, u))
                 })
-                .collect::<Vec<VideoUserDTO>>(),
+                .collect::<Vec<VideoUserDto>>(),
         ),
         _ => return HttpResponse::InternalServerError().finish(),
     }
@@ -406,7 +406,7 @@ pub async fn collection_info(
     })
     .await
     {
-        Ok(t) => HttpResponse::Ok().json(CollectionVideoUserDTO::from((
+        Ok(t) => HttpResponse::Ok().json(CollectionVideoUserDto::from((
             collection,
             t.into_iter()
                 .map(|mut tuple| {
@@ -510,9 +510,9 @@ pub async fn get_liked_videos(
                 .map(|row| {
                     let (_, mut v, u) = row;
                     v.resolve(&config.media_base_url);
-                    VideoUserDTO::from((v, u))
+                    VideoUserDto::from((v, u))
                 })
-                .collect::<Vec<VideoUserDTO>>(),
+                .collect::<Vec<VideoUserDto>>(),
         ),
         _ => HttpResponse::InternalServerError().finish(),
     }

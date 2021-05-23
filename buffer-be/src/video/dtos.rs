@@ -22,34 +22,6 @@ pub struct NewCommentDto {
 }
 
 #[derive(Serialize)]
-pub struct VideoListResponseDto {
-    pub id: String,
-    pub title: String,
-    #[serde(rename = "thumbnailPath")]
-    pub thumbnail_path: String,
-    #[serde(rename = "createdAt")]
-    pub created_at: NaiveDateTime,
-    pub uploader: String,
-    #[serde(rename = "uploaderId")]
-    pub uploader_id: String,
-}
-
-impl From<(Video, Option<User>)> for VideoListResponseDto {
-    fn from(tuple: (Video, Option<User>)) -> Self {
-        let (v, u) = tuple;
-        let u = u.unwrap();
-        Self {
-            id: v.id,
-            title: v.title,
-            thumbnail_path: v.thumbnail_path,
-            created_at: v.created_at,
-            uploader: u.display_name,
-            uploader_id: u.id,
-        }
-    }
-}
-
-#[derive(Serialize)]
 pub struct VideoDetailDto {
     pub id: String,
     pub title: String,
@@ -201,12 +173,12 @@ impl Default for CollectionDto {
 }
 
 #[derive(Serialize)]
-pub struct VideoUserDTO {
+pub struct VideoUserDto {
     pub user: User,
     pub video: Video,
 }
 
-impl From<(Video, User)> for VideoUserDTO {
+impl From<(Video, User)> for VideoUserDto {
     fn from(tuple: (Video, User)) -> Self {
         Self {
             user: tuple.1,
@@ -216,18 +188,18 @@ impl From<(Video, User)> for VideoUserDTO {
 }
 
 #[derive(Serialize)]
-pub struct CollectionVideoUserDTO {
+pub struct CollectionVideoUserDto {
     pub collection: Collection,
     #[serde(rename = "videoUsers")]
-    pub video_users: Vec<VideoUserDTO>,
+    pub video_users: Vec<VideoUserDto>,
 }
 
-impl From<(Collection, Vec<(Video, User)>)> for CollectionVideoUserDTO {
+impl From<(Collection, Vec<(Video, User)>)> for CollectionVideoUserDto {
     fn from(tuple: (Collection, Vec<(Video, User)>)) -> Self {
         let (c, vs) = tuple;
         Self {
             collection: c,
-            video_users: vs.into_iter().map(VideoUserDTO::from).collect(),
+            video_users: vs.into_iter().map(VideoUserDto::from).collect(),
         }
     }
 }
