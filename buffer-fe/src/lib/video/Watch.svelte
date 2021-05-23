@@ -6,7 +6,7 @@
   import { Link, navigate } from 'svelte-routing';
 
   import CommentSection from './CommentSection.svelte';
-  import { getVideoDetail, getVideoRating, hasRated, rateVideo } from '../../api/videoApi';
+  import { deleteVideo, getVideoDetail, getVideoRating, hasRated, rateVideo } from '../../api/videoApi';
   import { userState } from '../../store/authStore';
   import type { HasRatedDTO, VideoDetailDTO, VideoRatingDTO } from '../../types';
   import ShareToTwitter from '../components/ShareToTwitter.svelte';
@@ -67,6 +67,11 @@
         .catch((err) => console.error(err));
     }
   };
+  const handleDelete = () => {
+    deleteVideo(videoId)
+      .then(() => navigate('/'))
+      .catch((err) => console.error(err));
+  };
 
   $: if (video.createdAt !== '') {
     let dateObj = new Date(video.createdAt);
@@ -101,10 +106,16 @@
       uploaded on {date}
     </div>
     <div class="info-right">
-      <span class="icon is-medium icon-button" on:click={() => navigate(`/collection/add?id=${videoId}`)}>
-        <!-- prettier-ignore -->
-        <i class="fa fa-plus" aria-hidden="true"></i>
-      </span>
+      {#if $userState.signedIn}
+        <span class="icon is-medium icon-button" on:click={handleDelete}>
+          <!-- prettier-ignore -->
+          <i class="fa fa-trash" aria-hidden="true"></i>
+        </span>
+        <span class="icon is-medium icon-button" on:click={() => navigate(`/collection/add?id=${videoId}`)}>
+          <!-- prettier-ignore -->
+          <i class="fa fa-plus" aria-hidden="true"></i>
+        </span>
+      {/if}
       <ShareToTwitter title={video.title} />
       <div class="icon-button" class:has-text-primary={userHasRated.hasRated && !userHasRated.isDislike}>
         <Icon pack="fa" size="is-medium" icon="thumbs-up" on:click={() => ratingHandler(false)} />

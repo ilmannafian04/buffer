@@ -56,3 +56,7 @@ export const newCollection = (data: NewCollectionData) => {
 export const getLikedVideos = () => {
   return axios.get('/api/a/video/liked', authenticatedConfig());
 };
+
+export const deleteVideo = (id: string) => {
+  return axios.post('/api/a/video/delete', { id }, jsonAuthedConfig());
+};

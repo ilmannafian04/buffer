@@ -525,3 +525,25 @@ pub async fn get_liked_videos(
         _ => HttpResponse::InternalServerError().finish(),
     }
 }
+
+pub async fn delete_video(
+    pool: web::Data<DbPool>,
+    req: HttpRequest,
+    payload: web::Json<IdQuery>,
+) -> HttpResponse {
+    let user = req.head().extensions().get::<User>().unwrap().clone();
+    let conn = pool.get().unwrap();
+    let video = match web::block(move || Video::find_by_id(&conn, &payload.id)).await {
+        Ok(c) => c,
+        Err(BlockingError::Error(Error::NotFound)) => return HttpResponse::NotFound().finish(),
+        _ => return HttpResponse::InternalServerError().finish(),
+    };
+    if video.uploader != user.id {
+        return HttpResponse::Forbidden().finish();
+    }
+    let conn = pool.get().unwrap();
+    match web::block(move || video.delete(&conn)).await {
+        Ok(_) => HttpResponse::Ok().finish(),
+        _ => HttpResponse::InternalServerError().finish(),
+    }
+}

@@ -93,6 +93,11 @@ impl Video {
             .order_by(similarity(title, term).desc())
             .get_results(conn)
     }
+
+    pub fn delete(self, conn: &PgConnection) -> QueryResult<usize> {
+        use crate::schema::videos::dsl::id;
+        diesel::delete(all_videos.filter(id.eq(self.id))).execute(conn)
+    }
 }
 
 impl ResolveMediaUrl for Video {
@@ -197,6 +202,11 @@ impl Comment {
             .offset(skip)
             .limit(5)
             .get_results(conn)
+    }
+
+    pub fn delete(self, conn: &PgConnection) -> QueryResult<usize> {
+        use crate::schema::comments::dsl::id;
+        diesel::delete(all_comments.filter(id.eq(self.id))).execute(conn)
     }
 }
 
@@ -341,6 +351,11 @@ impl Collection {
             .filter(id.eq(c_id))
             .filter(user_id.eq(u_id))
             .get_result(conn)
+    }
+
+    pub fn delete(self, conn: &PgConnection) -> QueryResult<usize> {
+        use crate::schema::collections::dsl::id;
+        diesel::delete(all_collections.filter(id.eq(self.id))).execute(conn)
     }
 }
 
