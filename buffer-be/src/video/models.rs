@@ -102,6 +102,17 @@ impl Video {
             .set(view_count.eq(curr + 1))
             .execute(conn)
     }
+
+    pub fn find_many_sort_by_view_join_user(
+        conn: &PgConnection,
+    ) -> QueryResult<Vec<(Video, User)>> {
+        use crate::schema::videos::dsl::view_count;
+        all_videos
+            .inner_join(users::table)
+            .order_by(view_count.desc())
+            .limit(10)
+            .get_results(conn)
+    }
 }
 
 impl ResolveMediaUrl for Video {

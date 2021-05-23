@@ -600,3 +600,22 @@ pub async fn delete_comment(
         _ => HttpResponse::InternalServerError().finish(),
     }
 }
+
+pub async fn list_trending_videos(
+    pool: web::Data<DbPool>,
+    config: web::Data<Config>,
+) -> HttpResponse {
+    let conn = pool.get().unwrap();
+    match web::block(move || Video::find_many_sort_by_view_join_user(&conn)).await {
+        Ok(rows) => HttpResponse::Ok().json(
+            rows.into_iter()
+                .map(|row| {
+                    let (mut v, u) = row;
+                    v.resolve(&config.media_base_url);
+                    VideoUserDto::from((v, u))
+                })
+                .collect::<Vec<VideoUserDto>>(),
+        ),
+        _ => HttpResponse::InternalServerError().finish(),
+    }
+}

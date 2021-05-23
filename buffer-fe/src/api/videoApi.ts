@@ -64,3 +64,7 @@ export const deleteVideo = (id: string) => {
 export const deleteComment = (id: string) => {
   return axios.post('/api/a/video/comment/delete', { id }, jsonAuthedConfig());
 };
+
+export const listTrendingVideos = () => {
+  return axios.get('/api/video/trending');
+};

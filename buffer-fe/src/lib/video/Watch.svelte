@@ -6,11 +6,13 @@
   import { Link, navigate } from 'svelte-routing';
 
   import CommentSection from './CommentSection.svelte';
+  import VideoSuggestion from './VideoSuggestion.svelte';
+  import ShareToTwitter from '../components/ShareToTwitter.svelte';
   import { deleteVideo, getVideoDetail, getVideoRating, hasRated, rateVideo } from '../../api/videoApi';
   import { userState } from '../../store/authStore';
   import type { HasRatedDTO, VideoRatingDTO, VideoUser } from '../../types';
-  import ShareToTwitter from '../components/ShareToTwitter.svelte';
   import { parseDate } from '../../util/stringUtil';
+
   export let videoId;
   let videoUser: VideoUser;
   let rating = {
@@ -67,7 +69,7 @@
       .then((value: AxiosResponse<HasRatedDTO>) => (userHasRated = value.data))
       .catch((err) => console.error(err));
   }
-  onMount(() => {
+  $: if (videoId) {
     getVideoDetail(videoId)
       .then((value: AxiosResponse<VideoUser>) => {
         videoUser = value.data;
@@ -75,54 +77,66 @@
       })
       .then((value: AxiosResponse<VideoRatingDTO>) => (rating = value.data))
       .catch((err) => console.error(err));
-  });
+  }
 </script>
 
 {#if videoUser !== undefined}
-  <vm-player controls>
-    <vm-video poster={videoUser.video.thumbnailPath}>
-      <source data-src={videoUser.video.videoPath} type="video/mp4" />
-    </vm-video>
-  </vm-player>
-  <div>
-    <div class="is-size-4">{videoUser.video.title}</div>
-    <div class="creator-detail">
+  <div class="under-video">
+    <div class="comment-section mr-3">
+      <vm-player controls>
+        <vm-video poster={videoUser.video.thumbnailPath}>
+          <source data-src={videoUser.video.videoPath} type="video/mp4" />
+        </vm-video>
+      </vm-player>
       <div>
-        <Link to="/c/{videoUser.user.username}">{videoUser.user.displayName}</Link>
-        uploaded on {parseDate(videoUser.video.createdAt)} - {videoUser.video.viewCount} views
-      </div>
-      <div class="info-right">
-        {#if $userState.user?.id === videoUser.user.id}
-          <span class="icon is-medium icon-button" on:click={handleDelete}>
-            <!-- prettier-ignore -->
-            <i class="fa fa-trash" aria-hidden="true"></i>
-          </span>
-        {/if}
-        {#if $userState.signedIn}
-          <span class="icon is-medium icon-button" on:click={() => navigate(`/collection/add?id=${videoId}`)}>
-            <!-- prettier-ignore -->
-            <i class="fa fa-plus" aria-hidden="true"></i>
-          </span>
-        {/if}
-        <ShareToTwitter title={videoUser.video.title} />
-        <div class="icon-button" class:has-text-primary={userHasRated.hasRated && !userHasRated.isDislike}>
-          <Icon pack="fa" size="is-medium" icon="thumbs-up" on:click={() => ratingHandler(false)} />
+        <div class="is-size-4">{videoUser.video.title}</div>
+        <div class="creator-detail">
+          <div>
+            <Link to="/c/{videoUser.user.username}">{videoUser.user.displayName}</Link>
+            uploaded on {parseDate(videoUser.video.createdAt)} - {videoUser.video.viewCount} views
+          </div>
+          <div class="info-right">
+            {#if $userState.user?.id === videoUser.user.id}
+              <span class="icon is-medium icon-button" on:click={handleDelete}>
+                <!-- prettier-ignore -->
+                <i class="fa fa-trash" aria-hidden="true"></i>
+              </span>
+            {/if}
+            {#if $userState.signedIn}
+              <span class="icon is-medium icon-button" on:click={() => navigate(`/collection/add?id=${videoId}`)}>
+                <!-- prettier-ignore -->
+                <i class="fa fa-plus" aria-hidden="true"></i>
+              </span>
+            {/if}
+            <ShareToTwitter title={videoUser.video.title} />
+            <div class="icon-button" class:has-text-primary={userHasRated.hasRated && !userHasRated.isDislike}>
+              <Icon pack="fa" size="is-medium" icon="thumbs-up" on:click={() => ratingHandler(false)} />
+            </div>
+            {rating.like}/{rating.dislike}
+            <div class="icon-button" class:has-text-primary={userHasRated.hasRated && userHasRated.isDislike}>
+              <Icon pack="fa" size="is-medium" icon="thumbs-down" on:click={() => ratingHandler(true)} />
+            </div>
+          </div>
         </div>
-        {rating.like}/{rating.dislike}
-        <div class="icon-button" class:has-text-primary={userHasRated.hasRated && userHasRated.isDislike}>
-          <Icon pack="fa" size="is-medium" icon="thumbs-down" on:click={() => ratingHandler(true)} />
+        <div>
+          {videoUser.video.description}
         </div>
       </div>
+      <hr class="divider" />
+      <CommentSection {videoId} />
     </div>
-    <div>
-      {videoUser.video.description}
-    </div>
+    <VideoSuggestion parentId={videoUser.video.id} />
   </div>
-  <hr class="divider" />
-  <CommentSection {videoId} />
 {/if}
 
 <style lang="postcss">
+  .comment-section {
+    flex-grow: 1;
+  }
+  .under-video {
+    display: flex;
+    flex-flow: row nowrap;
+  }
   .creator-detail {
     display: flex;
     align-items: center;

@@ -24,7 +24,8 @@ pub fn configuration(cfg: &mut web::ServiceConfig) {
             .route("/detail", web::get().to(v::video_detail))
             .route("/comments", web::get().to(v::video_comments))
             .route("/rating", web::get().to(v::get_rating))
-            .route("/search", web::get().to(v::search_videos)),
+            .route("/search", web::get().to(v::search_videos))
+            .route("/trending", web::get().to(v::list_trending_videos)),
     )
     .service(
         web::scope("/api/a/creator")
