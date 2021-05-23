@@ -530,6 +530,7 @@ pub async fn delete_video(
     pool: web::Data<DbPool>,
     req: HttpRequest,
     payload: web::Json<IdQuery>,
+    config: web::Data<Config>,
 ) -> HttpResponse {
     let user = req.head().extensions().get::<User>().unwrap().clone();
     let conn = pool.get().unwrap();
@@ -540,6 +541,15 @@ pub async fn delete_video(
     };
     if video.uploader != user.id {
         return HttpResponse::Forbidden().finish();
+    }
+    let video_folder_dir = Path::new(&config.media_base_dir)
+        .join(&user.id)
+        .join(&video.id);
+    if web::block(|| std::fs::remove_dir_all(video_folder_dir))
+        .await
+        .is_err()
+    {
+        return HttpResponse::InternalServerError().finish();
     }
     let conn = pool.get().unwrap();
     match web::block(move || video.delete(&conn)).await {
