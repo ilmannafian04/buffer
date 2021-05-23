@@ -2,15 +2,15 @@
   import type { AxiosResponse } from 'axios';
   import { onMount } from 'svelte';
 
+  import VideoCard from './components/VideoCard.svelte';
   import { listVideos } from '../api/videoApi';
-  import type { ListVideoDTO } from '../types/dto';
-  import ListVideo from './components/ListVideo.svelte';
+  import type { VideoUser } from '../types';
 
-  let videos = [];
+  let videos: VideoUser[] = [];
 
   onMount(() => {
     listVideos()
-      .then((value: AxiosResponse<ListVideoDTO[]>) => {
+      .then((value: AxiosResponse<VideoUser[]>) => {
         videos = value.data;
       })
       .catch((err) => console.error(err));
@@ -19,9 +19,9 @@
 
 <div class="is-size-1 pb-1">New Videos</div>
 <div class="listing">
-  {#each videos as video (video.id)}
-    <div class="m-2">
-      <ListVideo {video} />
+  {#each videos as video (video.video.id)}
+    <div class="my-3 mx-2">
+      <VideoCard videoUser={video} />
     </div>
   {/each}
 </div>

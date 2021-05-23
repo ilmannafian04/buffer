@@ -60,10 +60,10 @@ impl Video {
     pub fn find_many_sort_by_new(
         conn: &PgConnection,
         skip: i64,
-    ) -> QueryResult<Vec<(Video, Option<User>)>> {
+    ) -> QueryResult<Vec<(Video, User)>> {
         use crate::schema::videos::dsl::created_at;
         all_videos
-            .left_join(users::table)
+            .inner_join(users::table)
             .limit(10)
             .offset(skip)
             .order_by(created_at.desc())

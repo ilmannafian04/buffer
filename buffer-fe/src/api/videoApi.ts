@@ -10,7 +10,7 @@ export const uploadVideo = (data: FormData) => {
 };
 
 export const listVideos = () => {
-  return axios.get<ListVideoDTO[]>('/api/video');
+  return axios.get('/api/video');
 };
 
 export const getVideoDetail = (id: string) => {

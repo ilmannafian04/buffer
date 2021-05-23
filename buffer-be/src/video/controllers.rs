@@ -178,9 +178,9 @@ pub async fn list_videos(
             v.into_iter()
                 .map(|mut t| {
                     t.0.resolve(&config.media_base_url);
-                    VideoListResponseDto::from(t)
+                    VideoUserDTO::from(t)
                 })
-                .collect::<Vec<VideoListResponseDto>>(),
+                .collect::<Vec<VideoUserDTO>>(),
         ),
         Err(_) => return HttpResponse::InternalServerError().finish(),
     }
