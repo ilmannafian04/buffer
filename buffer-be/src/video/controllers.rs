@@ -364,9 +364,9 @@ pub async fn search_videos(
                 .map(|tuple| {
                     let (mut v, u) = tuple;
                     v.resolve(&config.media_base_url);
-                    VideoDetailDto::from((v, u))
+                    VideoUserDTO::from((v, u))
                 })
-                .collect::<Vec<VideoDetailDto>>(),
+                .collect::<Vec<VideoUserDTO>>(),
         ),
         _ => return HttpResponse::InternalServerError().finish(),
     }
