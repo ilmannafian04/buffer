@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 import { authenticatedConfig, jsonAuthedConfig } from './commonApi';
-import type { ListVideoDTO, NewCollectionData, NewCommentData } from '../types';
+import type { NewCollectionData, NewCommentData } from '../types';
 
 export const uploadVideo = (data: FormData) => {
   let config = authenticatedConfig();

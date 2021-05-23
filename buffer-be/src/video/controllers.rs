@@ -9,11 +9,10 @@ use validator::Validate;
 use super::{
     dtos::{
         CommentDto, HasRatedDto, NewCommentDto, NewVideoDto, RateVideoRequest, SearchVideoDto,
-        VideoDetailDto, VideoListDto, VideoListResponseDto, VideoRatingDto,
+        VideoDetailDto, VideoListDto, VideoRatingDto,
     },
     models::{Comment, NewComment, NewVideo, Rating, Video},
 };
-use crate::video::dtos::CollectionVideoUserDTO;
 use crate::{
     common::{
         dtos::{IdQuery, IndexRequestDto},
@@ -22,9 +21,8 @@ use crate::{
     },
     config::Config,
     user::{dtos::CreatorLookUpDto, models::User},
-    video::dtos::VideoUserDTO,
     video::{
-        dtos::{CollectionDetailDto, CollectionDto, NewCollectionDto},
+        dtos::{CollectionDto, CollectionVideoUserDTO, NewCollectionDto, VideoUserDTO},
         models::{Collection, CollectionVideo, NewCollection},
     },
 };
@@ -343,9 +341,9 @@ pub async fn creator_videos(
                 .map(|tuple| {
                     let (mut v, u) = tuple;
                     v.resolve(&config.media_base_url);
-                    VideoDetailDto::from((v, u))
+                    VideoUserDTO::from((v, u))
                 })
-                .collect::<Vec<VideoDetailDto>>(),
+                .collect::<Vec<VideoUserDTO>>(),
         ),
         _ => return HttpResponse::InternalServerError().finish(),
     }

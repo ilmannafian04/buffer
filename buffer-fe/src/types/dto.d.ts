@@ -49,9 +49,3 @@ export type HasRatedDTO = {
   hasRated: boolean;
   isDislike: boolean;
 };
-
-export type CollectionDetailDTO = {
-  name: string;
-  description: string;
-  videos: VideoDetailDTO[];
-};
