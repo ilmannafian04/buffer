@@ -1,26 +1,26 @@
 import axios from 'axios';
 import { authenticatedConfig } from './commonApi';
 
-export const creatorProfile = (displayName: string) => {
+export const creatorProfile = (username: string) => {
   return axios.get('/api/creator', {
     params: {
-      displayName,
+      username,
     },
   });
 };
 
-export const isFollowing = (displayName: string) => {
+export const isFollowing = (username: string) => {
   let config = authenticatedConfig();
   config.params = {
-    displayName,
+    username,
   };
   return axios.get<{ isFollowing: boolean }>('/api/a/creator/follow', config);
 };
 
-export const follow = (displayName: string) => {
-  return axios.post('/api/a/creator/follow', { displayName }, authenticatedConfig());
+export const follow = (username: string) => {
+  return axios.post('/api/a/creator/follow', { username }, authenticatedConfig());
 };
 
-export const unfollow = (displayName: string) => {
-  return axios.post('/api/a/creator/unfollow', { displayName }, authenticatedConfig());
+export const unfollow = (username: string) => {
+  return axios.post('/api/a/creator/unfollow', { username }, authenticatedConfig());
 };

@@ -18,9 +18,15 @@ export type UploadFormData = {
 export type NewCommentData = {
   videoId: string;
   content: string;
+  isAnonymous: boolean;
 };
 
 export type UpdateProfileData = {
   email: string;
   displayName: string;
+};
+
+export type NewCollectionData = {
+  name: string;
+  description: string;
 };

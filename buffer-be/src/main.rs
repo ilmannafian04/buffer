@@ -10,6 +10,7 @@ use dotenv::dotenv;
 use log::info;
 use validator::Validate;
 
+mod chat;
 mod common;
 mod config;
 mod middleware;

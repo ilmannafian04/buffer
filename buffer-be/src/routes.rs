@@ -13,6 +13,9 @@ pub fn configuration(cfg: &mut web::ServiceConfig) {
             .route("/comment", web::post().to(v::new_comment))
             .route("/rate", web::post().to(v::rate_video))
             .route("/hasrated", web::get().to(v::has_rated))
+            .route("/liked", web::get().to(v::get_liked_videos))
+            .route("/delete", web::post().to(v::delete_video))
+            .route("/comment/delete", web::post().to(v::delete_comment))
             .wrap(HttpAuthentication::bearer(auth_validator)),
     )
     .service(
@@ -37,6 +40,15 @@ pub fn configuration(cfg: &mut web::ServiceConfig) {
             .route("/videos", web::get().to(v::creator_videos)),
     )
     .service(
+        web::scope("/api/a/collection")
+            .route("/new", web::post().to(v::new_collection))
+            .route("/byme", web::get().to(v::users_collection))
+            .route("/addvideo", web::post().to(v::add_video_to_collection))
+            .route("/delete", web::post().to(v::delete_collection))
+            .wrap(HttpAuthentication::bearer(auth_validator)),
+    )
+    .service(web::scope("/api/collection").route("/detail", web::get().to(v::collection_info)))
+    .service(
         web::scope("/api/auth")
             .route("/ping", web::get().to(c::ping))
             .route("/account", web::get().to(u::user_info))
@@ -46,6 +58,6 @@ pub fn configuration(cfg: &mut web::ServiceConfig) {
         web::scope("/api")
             .route("/ping", web::get().to(c::ping))
             .route("/signup", web::post().to(u::signup))
-            .route("/signin", web::post().to(u::singin)),
+            .route("/signin", web::post().to(u::sign_in)),
     );
 }

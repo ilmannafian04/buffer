@@ -1,21 +1,37 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { searchVideo } from '../api/videoApi';
   import type { AxiosResponse } from 'axios';
-  import type { VideoDetailDTO } from '../types/dto';
-  import ListVideo from './components/ListVideo.svelte';
+  import queryString from 'query-string';
 
-  export let term;
+  import Divider from './components/Divider.svelte';
+  import VideoRow from './components/VideoRow.svelte';
+  import { searchVideo } from '../api/videoApi';
+  import type { VideoUser } from '../types';
+
+  export let location;
+  let term;
   let videos = [];
-
-  onMount(() => {
+  $: term = queryString.parse(location?.search)['term'];
+  $: if (term !== undefined) {
     searchVideo(term)
-      .then((value: AxiosResponse<VideoDetailDTO[]>) => (videos = value.data))
+      .then((value: AxiosResponse<VideoUser[]>) => (videos = value.data))
       .catch((err) => console.error(err));
-  });
-  $: console.log(videos);
+  }
 </script>
 
-{#each videos as video (video.id)}
-  <ListVideo {video} />
-{/each}
+<span class="is-size-2">Search result for "{term}"</span>
+<Divider />
+<div class="video-result">
+  {#each videos as video (video.video.id)}
+    <div class="m-2">
+      <VideoRow videoUser={video} />
+    </div>
+  {/each}
+</div>
+
+<style>
+  .video-result {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+  }
+</style>

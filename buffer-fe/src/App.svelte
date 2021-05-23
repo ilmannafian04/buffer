@@ -15,6 +15,8 @@
   import Upload from './lib/video/Upload.svelte';
   import Account from './lib/creator/Account.svelte';
   import Search from './lib/Search.svelte';
+  import Collection from './lib/collection/Collection.svelte';
+  import Liked from './lib/video/Liked.svelte';
 
   onMount(() => {
     let jwt = localStorage.getItem('jwt');
@@ -31,7 +33,7 @@
 </script>
 
 <Header />
-<div class="container mb-2">
+<div class="container my-2">
   <Router url={''}>
     <Route path="/signup">
       <Signup />
@@ -45,15 +47,19 @@
     <Route path="/account">
       <Account />
     </Route>
-    <Route path="/c/:displayName" let:params>
-      <Profile displayName={params.displayName} />
+    <Route path="/collection/*">
+      <Collection />
+    </Route>
+    <Route path="/liked">
+      <Liked />
+    </Route>
+    <Route path="/c/:userId" let:params>
+      <Profile displayName={params.userId} />
     </Route>
     <Route path="/w/:videoId" let:params>
       <Watch videoId={params.videoId} />
     </Route>
-    <Route path="/search/:term" let:params>
-      <Search term={params.term} />
-    </Route>
+    <Route path="/search" component={Search} />
     <Route path="/">
       <Home />
     </Route>

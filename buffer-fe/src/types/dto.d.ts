@@ -26,6 +26,7 @@ export type VideoDetailDTO = {
   thumbnailPath: string;
   createdAt: string;
   uploader: string;
+  uploaderUsername: string;
   uploaderId: string;
 };
 
@@ -35,14 +36,8 @@ export type CommentDTO = {
   createdAt: string;
   userId: string;
   userDisplayName: string;
-};
-
-export type NewCommentDTO = {
-  id: string;
-  videoId: string;
-  userId: string;
-  content: string;
-  createdAt: string;
+  username: string;
+  isAnonymous: boolean;
 };
 
 export type VideoRatingDTO = {

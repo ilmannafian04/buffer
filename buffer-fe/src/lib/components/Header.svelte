@@ -28,6 +28,14 @@
       name: 'Upload',
       path: '/upload',
     },
+    {
+      name: 'Colelction',
+      path: '/collection',
+    },
+    {
+      name: 'Liked Videos',
+      path: '/liked',
+    },
   ];
   $: if ($userState.signedIn) {
     navs = [...pubNavs, ...authedNavs];
@@ -35,7 +43,7 @@
     navs = pubNavs;
   }
   const searchHandler = () => {
-    navigate(`/search/${searchTerm}`);
+    navigate(`/search?term=${searchTerm}`);
   };
 </script>
 

@@ -12,7 +12,7 @@ pub struct IdQuery {
 }
 
 #[derive(Deserialize, Validate)]
-pub struct IndexRequestDTO {
+pub struct IndexRequestDto {
     pub id: String,
     #[validate(range(min = 0))]
     #[serde(default)]

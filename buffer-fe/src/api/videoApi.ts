@@ -1,7 +1,7 @@
 import axios from 'axios';
-import { authenticatedConfig } from './commonApi';
-import type { ListVideoDTO } from '../types/dto';
-import type { NewCommentData } from '../types/form';
+
+import { authenticatedConfig, jsonAuthedConfig } from './commonApi';
+import type { NewCollectionData, NewCommentData } from '../types';
 
 export const uploadVideo = (data: FormData) => {
   let config = authenticatedConfig();
@@ -10,15 +10,15 @@ export const uploadVideo = (data: FormData) => {
 };
 
 export const listVideos = () => {
-  return axios.get<ListVideoDTO[]>('/api/video');
+  return axios.get('/api/video');
 };
 
 export const getVideoDetail = (id: string) => {
   return axios.get('/api/video/detail', { params: { id } });
 };
 
-export const getCommentsInVideo = (id: string) => {
-  return axios.get('/api/video/comments', { params: { id } });
+export const getCommentsInVideo = (id: string, skip = 0) => {
+  return axios.get('/api/video/comments', { params: { id, skip } });
 };
 
 export const newComment = (data: NewCommentData) => {
@@ -43,4 +43,24 @@ export const hasRated = (id: string) => {
 
 export const searchVideo = (term: string) => {
   return axios.get('/api/video/search', { params: { term } });
+};
+
+export const getVideoByCreator = (username: string) => {
+  return axios.get('/api/creator/videos', { params: { username } });
+};
+
+export const newCollection = (data: NewCollectionData) => {
+  return axios.post('/api/a/collection/new', data, jsonAuthedConfig());
+};
+
+export const getLikedVideos = () => {
+  return axios.get('/api/a/video/liked', authenticatedConfig());
+};
+
+export const deleteVideo = (id: string) => {
+  return axios.post('/api/a/video/delete', { id }, jsonAuthedConfig());
+};
+
+export const deleteComment = (id: string) => {
+  return axios.post('/api/a/video/comment/delete', { id }, jsonAuthedConfig());
 };

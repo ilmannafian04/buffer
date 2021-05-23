@@ -5,14 +5,14 @@
   import { onMount } from 'svelte';
   import { navigate } from 'svelte-routing';
 
-  import ListVideo from '../components/ListVideo.svelte';
   import { creatorProfile, follow, isFollowing, unfollow } from '../../api/creatorApi';
-  import { getVideoByCreator } from '../../api/userApi';
+  import { getVideoByCreator } from '../../api/videoApi';
   import { userState } from '../../store/authStore';
-  import type { CreatorProfileResponse, VideoDetailDTO } from '../../types/dto';
+  import type { CreatorProfileResponse, VideoUser } from '../../types';
+  import VideoCard from '../components/VideoCard.svelte';
 
   export let displayName;
-  let videos: VideoDetailDTO[] = [];
+  let videos: VideoUser[] = [];
   let profile: CreatorProfileResponse = {
     creator: {
       id: '',
@@ -30,7 +30,7 @@
         profile = value.data;
         return getVideoByCreator(displayName);
       })
-      .then((value: AxiosResponse<VideoDetailDTO[]>) => (videos = value.data))
+      .then((value: AxiosResponse<VideoUser[]>) => (videos = value.data))
       .catch((err) => console.error(err));
     if ($userState.signedIn) {
       isFollowing(displayName)
@@ -71,8 +71,8 @@
   <Button on:click={followHandler}>{following ? 'Followed' : 'Follow'}</Button>
 </div>
 <div class="video-section">
-  {#each videos as video (video.id)}
-    <div class="pr-4 pb-2"><ListVideo {video} /></div>
+  {#each videos as video (video.video.id)}
+    <div class="pr-4 pb-2"><VideoCard videoUser={video} /></div>
   {/each}
 </div>
 

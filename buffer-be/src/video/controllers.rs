@@ -1,28 +1,30 @@
 use std::{io::Write, path::Path};
 
 use actix_multipart::Multipart;
-use actix_web::{error::BlockingError, web, HttpRequest, HttpResponse, ResponseError};
-use diesel::result::Error;
+use actix_web::{error::BlockingError, web, HttpRequest, HttpResponse};
+use diesel::result::{DatabaseErrorKind, Error};
 use futures::TryStreamExt;
 use validator::Validate;
 
+use super::{
+    dtos::{
+        CommentDto, HasRatedDto, NewCommentDto, NewVideoDto, RateVideoRequest, SearchVideoDto,
+        VideoDetailDto, VideoRatingDto,
+    },
+    models::{Comment, NewComment, NewVideo, Rating, Video},
+};
 use crate::{
     common::{
-        dtos::{IdQuery, IndexRequestDTO},
-        errors::DatabaseError,
-        models::ResolveMediaURL,
+        dtos::{IdQuery, IndexRequestDto},
+        models::ResolveMediaUrl,
         types::DbPool,
     },
     config::Config,
-    user::{dtos::CreatorLookUpDTO, models::User},
-};
-
-use super::{
-    dtos::{
-        CommentDTO, HasRatedDTO, NewCommentDTO, NewVideoDTO, RateVideoRequest, SearchVideoDTO,
-        VideoDetailDTO, VideoListDTO, VideoListResponseDTO, VideoRatingDTO,
+    user::{dtos::CreatorLookUpDto, models::User},
+    video::{
+        dtos::{CollectionDto, CollectionVideoUserDto, NewCollectionDto, VideoUserDto},
+        models::{Collection, CollectionVideo, NewCollection},
     },
-    models::{Comment, NewComment, NewVideo, Rating, Video},
 };
 
 pub async fn upload_video(
@@ -31,15 +33,14 @@ pub async fn upload_video(
     pool: web::Data<DbPool>,
     config: web::Data<Config>,
 ) -> HttpResponse {
-    let extension = req.head().extensions();
-    let user = extension.get::<User>().unwrap();
+    let user = req.head().extensions().get::<User>().unwrap().clone();
     let mut new_video = NewVideo::default();
     let mut metadata_is_parsed = false;
     let mut video_is_saved = false;
     let mut thumbnail_is_saved = false;
     let base_path = Path::new(&config.media_base_dir);
     let path_to_video_folder = Path::new(&user.id.to_string()).join(new_video.id.clone());
-    if let Err(_) = std::fs::create_dir_all(&base_path.join(&path_to_video_folder)) {
+    if std::fs::create_dir_all(&base_path.join(&path_to_video_folder)).is_err() {
         return HttpResponse::InternalServerError().finish();
     };
     while let Ok(Some(mut field)) = payload.try_next().await {
@@ -53,7 +54,7 @@ pub async fn upload_video(
                     Err(_) => return HttpResponse::BadRequest().finish(),
                 };
             }
-            match serde_json::from_str::<NewVideoDTO>(json_string.as_str()) {
+            match serde_json::from_str::<NewVideoDto>(json_string.as_str()) {
                 Ok(dto) => {
                     new_video.title = dto.title;
                     new_video.description = dto.description;
@@ -95,7 +96,9 @@ pub async fn upload_video(
                 .join(&path_to_video_folder)
                 .join(&thumbnail_name);
             new_video.thumbnail_path = db_path.to_str().unwrap().to_owned();
-            let mut thumbnail = match web::block(move || std::fs::File::create(fs_path)).await {
+            let path_closure = fs_path.clone();
+            let mut thumbnail = match web::block(move || std::fs::File::create(path_closure)).await
+            {
                 Ok(f) => f,
                 Err(_) => return HttpResponse::InternalServerError().finish(),
             };
@@ -106,22 +109,23 @@ pub async fn upload_video(
                         Err(_) => return HttpResponse::InternalServerError().finish(),
                     }
             }
+            if web::block(move || NewVideo::crop_thumbnail(&fs_path))
+                .await
+                .is_err()
+            {
+                return HttpResponse::InternalServerError().finish();
+            }
             thumbnail_is_saved = true;
         }
     }
     if metadata_is_parsed && video_is_saved && thumbnail_is_saved {
-        match pool.get() {
-            Ok(conn) => {
-                let query = web::block(move || new_video.insert(&conn)).await;
-                match query {
-                    Ok(mut video) => {
-                        video.resolve(&config.media_base_url);
-                        HttpResponse::Ok().json(video)
-                    }
-                    Err(_) => HttpResponse::InternalServerError().finish(),
-                }
+        let conn = pool.get().unwrap();
+        match web::block(move || new_video.insert(&conn)).await {
+            Ok(mut video) => {
+                video.resolve(&config.media_base_url);
+                HttpResponse::Ok().json(video)
             }
-            Err(_) => return DatabaseError::PoolLockError.error_response(),
+            Err(_) => HttpResponse::InternalServerError().finish(),
         }
     } else {
         HttpResponse::BadRequest().finish()
@@ -130,10 +134,12 @@ pub async fn upload_video(
 
 pub async fn new_comment(
     pool: web::Data<DbPool>,
-    payload: web::Json<NewCommentDTO>,
+    payload: web::Json<NewCommentDto>,
     req: HttpRequest,
 ) -> HttpResponse {
-    let u_id = req.head().extensions().get::<User>().unwrap().id.clone();
+    let ext = req.head().extensions();
+    let user = ext.get::<User>().unwrap();
+    let u_id = user.id.clone();
     let conn = pool.get().unwrap();
     let v_id_closure = payload.video_id.clone();
     let video = match web::block(move || Video::find_by_id(&conn, &v_id_closure)).await {
@@ -142,33 +148,30 @@ pub async fn new_comment(
         _ => return HttpResponse::InternalServerError().finish(),
     };
     let conn = pool.get().unwrap();
-    let mut new_comment = NewComment::default();
-    new_comment.user_id = u_id;
-    new_comment.video_id = video.id.clone();
-    new_comment.content = payload.content.clone();
+    let new_comment = NewComment {
+        user_id: u_id,
+        video_id: video.id.clone(),
+        content: payload.content.clone(),
+        is_anonymous: payload.is_anonymous,
+        ..Default::default()
+    };
+    let user_closure = user.clone();
     match web::block(move || new_comment.insert(&conn)).await {
-        Ok(c) => HttpResponse::Ok().json(c),
+        Ok(c) => HttpResponse::Ok().json(CommentDto::from((c, Some(user_closure)))),
         _ => HttpResponse::InternalServerError().finish(),
     }
 }
 
-pub async fn list_videos(
-    pool: web::Data<DbPool>,
-    query: web::Query<VideoListDTO>,
-    config: web::Data<Config>,
-) -> HttpResponse {
-    if let Err(_) = query.validate() {
-        return HttpResponse::BadRequest().finish();
-    }
+pub async fn list_videos(pool: web::Data<DbPool>, config: web::Data<Config>) -> HttpResponse {
     let conn = pool.get().unwrap();
-    match web::block(move || Video::find_many_sort_by_new(&conn, query.skip)).await {
+    match web::block(move || Video::find_many_sort_by_new(&conn)).await {
         Ok(v) => HttpResponse::Ok().json(
             v.into_iter()
                 .map(|mut t| {
                     t.0.resolve(&config.media_base_url);
-                    VideoListResponseDTO::from(t)
+                    VideoUserDto::from(t)
                 })
-                .collect::<Vec<VideoListResponseDTO>>(),
+                .collect::<Vec<VideoUserDto>>(),
         ),
         Err(_) => return HttpResponse::InternalServerError().finish(),
     }
@@ -183,7 +186,7 @@ pub async fn video_detail(
     match web::block(move || Video::find_by_id_join_user(&conn, &query.id)).await {
         Ok(mut t) => {
             t.0.resolve(&config.media_base_url);
-            HttpResponse::Ok().json(VideoDetailDTO::from(t))
+            HttpResponse::Ok().json(VideoDetailDto::from(t))
         }
         Err(BlockingError::Error(Error::NotFound)) => return HttpResponse::NotFound().finish(),
         _ => return HttpResponse::InternalServerError().finish(),
@@ -192,8 +195,11 @@ pub async fn video_detail(
 
 pub async fn video_comments(
     pool: web::Data<DbPool>,
-    query: web::Query<IndexRequestDTO>,
+    query: web::Query<IndexRequestDto>,
 ) -> HttpResponse {
+    if query.validate().is_err() {
+        return HttpResponse::BadRequest().finish();
+    };
     let conn = pool.get().unwrap();
     let id_closure = query.id.clone();
     let video = match web::block(move || Video::find_by_id(&conn, &id_closure)).await {
@@ -202,12 +208,14 @@ pub async fn video_comments(
         _ => return HttpResponse::InternalServerError().finish(),
     };
     let conn = pool.get().unwrap();
-    match web::block(move || Comment::find_many_by_video_join_user(&conn, &video.id)).await {
+    match web::block(move || Comment::find_many_by_video_join_user(&conn, &video.id, query.skip))
+        .await
+    {
         Ok(tuples) => HttpResponse::Ok().json(
             tuples
                 .into_iter()
-                .map(CommentDTO::from)
-                .collect::<Vec<CommentDTO>>(),
+                .map(CommentDto::from)
+                .collect::<Vec<CommentDto>>(),
         ),
         _ => return HttpResponse::InternalServerError().finish(),
     }
@@ -233,16 +241,17 @@ pub async fn rate_video(
         Ok(rating) => {
             let conn = pool.get().unwrap();
             if rating.is_dislike != payload.is_dislike {
-                if let Err(_) = web::block(move || rating.update(&conn, payload.is_dislike)).await {
-                    return HttpResponse::InternalServerError().finish();
-                }
-            } else {
-                if let Err(_) =
-                    web::block(move || Rating::delete(&conn, &rating.video_id, &rating.user_id))
-                        .await
+                if web::block(move || rating.update(&conn, payload.is_dislike))
+                    .await
+                    .is_err()
                 {
                     return HttpResponse::InternalServerError().finish();
                 }
+            } else if web::block(move || Rating::delete(&conn, &rating.video_id, &rating.user_id))
+                .await
+                .is_err()
+            {
+                return HttpResponse::InternalServerError().finish();
             }
             HttpResponse::Ok().finish()
         }
@@ -281,7 +290,7 @@ pub async fn get_rating(pool: web::Data<DbPool>, query: web::Query<IdQuery>) -> 
         Ok(c) => c,
         _ => return HttpResponse::InternalServerError().finish(),
     };
-    HttpResponse::Ok().json(VideoRatingDTO { like, dislike })
+    HttpResponse::Ok().json(VideoRatingDto { like, dislike })
 }
 
 pub async fn has_rated(
@@ -294,11 +303,11 @@ pub async fn has_rated(
     let conn = pool.get().unwrap();
     let id_closure = user.id.clone();
     match web::block(move || Rating::find_by_video_and_user(&conn, &query.id, &id_closure)).await {
-        Ok(rating) => HttpResponse::Ok().json(HasRatedDTO {
+        Ok(rating) => HttpResponse::Ok().json(HasRatedDto {
             has_rated: true,
             is_dislike: rating.is_dislike,
         }),
-        Err(BlockingError::Error(Error::NotFound)) => HttpResponse::Ok().json(HasRatedDTO {
+        Err(BlockingError::Error(Error::NotFound)) => HttpResponse::Ok().json(HasRatedDto {
             has_rated: false,
             is_dislike: false,
         }),
@@ -308,16 +317,15 @@ pub async fn has_rated(
 
 pub async fn creator_videos(
     pool: web::Data<DbPool>,
-    query: web::Query<CreatorLookUpDTO>,
+    query: web::Query<CreatorLookUpDto>,
     config: web::Data<Config>,
 ) -> HttpResponse {
     let conn = pool.get().unwrap();
-    let user =
-        match web::block(move || User::find_by_display_name(&conn, &query.display_name)).await {
-            Ok(u) => u,
-            Err(BlockingError::Error(Error::NotFound)) => return HttpResponse::NotFound().finish(),
-            _ => return HttpResponse::InternalServerError().finish(),
-        };
+    let user = match web::block(move || User::find_by_username(&conn, &query.username)).await {
+        Ok(u) => u,
+        Err(BlockingError::Error(Error::NotFound)) => return HttpResponse::NotFound().finish(),
+        _ => return HttpResponse::InternalServerError().finish(),
+    };
     let conn = pool.get().unwrap();
     match web::block(move || Video::find_many_by_id_join_user(&conn, &user.id)).await {
         Ok(videos) => HttpResponse::Ok().json(
@@ -326,9 +334,9 @@ pub async fn creator_videos(
                 .map(|tuple| {
                     let (mut v, u) = tuple;
                     v.resolve(&config.media_base_url);
-                    VideoDetailDTO::from((v, u))
+                    VideoUserDto::from((v, u))
                 })
-                .collect::<Vec<VideoDetailDTO>>(),
+                .collect::<Vec<VideoUserDto>>(),
         ),
         _ => return HttpResponse::InternalServerError().finish(),
     }
@@ -336,23 +344,252 @@ pub async fn creator_videos(
 
 pub async fn search_videos(
     pool: web::Data<DbPool>,
-    query: web::Query<SearchVideoDTO>,
+    query: web::Query<SearchVideoDto>,
     config: web::Data<Config>,
 ) -> HttpResponse {
     let conn = pool.get().unwrap();
-    match web::block(move || Video::find_many_by_title_or_description_join_user(&conn, &query.term))
-        .await
-    {
+    match web::block(move || Video::find_many_by_title_fuzzy(&conn, &query.term)).await {
         Ok(videos) => HttpResponse::Ok().json(
             videos
                 .into_iter()
                 .map(|tuple| {
                     let (mut v, u) = tuple;
                     v.resolve(&config.media_base_url);
-                    VideoDetailDTO::from((v, u))
+                    VideoUserDto::from((v, u))
                 })
-                .collect::<Vec<VideoDetailDTO>>(),
+                .collect::<Vec<VideoUserDto>>(),
         ),
         _ => return HttpResponse::InternalServerError().finish(),
+    }
+}
+
+pub async fn new_collection(
+    pool: web::Data<DbPool>,
+    payload: web::Json<NewCollectionDto>,
+    req: HttpRequest,
+) -> HttpResponse {
+    let ext = req.head().extensions();
+    let user = ext.get::<User>().unwrap();
+    let new_collection = NewCollection {
+        name: payload.name.clone(),
+        description: payload.description.clone(),
+        user_id: user.id.clone(),
+        ..NewCollection::default()
+    };
+    let conn = pool.get().unwrap();
+    match web::block(move || new_collection.insert(&conn)).await {
+        Ok(c) => HttpResponse::Ok().json(c),
+        _ => HttpResponse::InternalServerError().finish(),
+    }
+}
+
+pub async fn collection_info(
+    pool: web::Data<DbPool>,
+    query: web::Query<IndexRequestDto>,
+    config: web::Data<Config>,
+) -> HttpResponse {
+    let conn = pool.get().unwrap();
+    let id_closure = query.id.clone();
+    let collection = match web::block(move || Collection::find_by_id(&conn, &id_closure)).await {
+        Ok(c) => c,
+        Err(BlockingError::Error(Error::NotFound)) => return HttpResponse::NotFound().finish(),
+        _ => return HttpResponse::InternalServerError().finish(),
+    };
+    let conn = pool.get().unwrap();
+    let id_closure = collection.id.clone();
+    match web::block(move || {
+        CollectionVideo::find_many_by_collection_join_video_join_user(
+            &conn,
+            &id_closure,
+            query.skip,
+        )
+    })
+    .await
+    {
+        Ok(t) => HttpResponse::Ok().json(CollectionVideoUserDto::from((
+            collection,
+            t.into_iter()
+                .map(|mut tuple| {
+                    tuple.1 .0.resolve(&config.media_base_url);
+                    tuple.1
+                })
+                .collect::<Vec<(Video, User)>>(),
+        ))),
+        _ => HttpResponse::InternalServerError().finish(),
+    }
+}
+
+pub async fn users_collection(pool: web::Data<DbPool>, req: HttpRequest) -> HttpResponse {
+    let ext = req.head().extensions();
+    let user = ext.get::<User>().unwrap();
+    let conn = pool.get().unwrap();
+    let id_closure = user.id.clone();
+    let tuples =
+        match web::block(move || Collection::find_by_user_join_video(&conn, &id_closure)).await {
+            Ok(rows) => rows
+                .into_iter()
+                .map(|row| {
+                    (
+                        row.0,
+                        match row.1 {
+                            Some(t) => Some(t.1),
+                            None => None,
+                        },
+                    )
+                })
+                .collect::<Vec<(Collection, Option<Video>)>>(),
+            _ => return HttpResponse::InternalServerError().finish(),
+        };
+    let mut result: Vec<CollectionDto> = Vec::new();
+    let mut temp_dto = CollectionDto::default();
+    for tuple in tuples {
+        let (c, v) = tuple;
+        if c.id != temp_dto.id {
+            if !temp_dto.id.is_empty() {
+                result.push(temp_dto);
+            }
+            temp_dto = CollectionDto::from(c);
+        }
+        if v.is_some() {
+            temp_dto.videos.push(v.unwrap());
+        }
+    }
+    if !temp_dto.id.is_empty() {
+        result.push(temp_dto);
+    }
+    HttpResponse::Ok().json(result)
+}
+
+pub async fn add_video_to_collection(
+    pool: web::Data<DbPool>,
+    req: HttpRequest,
+    payload: web::Json<CollectionVideo>,
+) -> HttpResponse {
+    let ext = req.head().extensions();
+    let user = ext.get::<User>().unwrap();
+    let conn = pool.get().unwrap();
+    let tuple_closure = (payload.collection_id.clone(), user.id.clone());
+    match web::block(move || {
+        Collection::find_by_id_and_user(&conn, &tuple_closure.0, &tuple_closure.1)
+    })
+    .await
+    {
+        Err(BlockingError::Error(Error::NotFound)) => return HttpResponse::Forbidden().finish(),
+        Err(_) => return HttpResponse::InternalServerError().finish(),
+        _ => (),
+    };
+    let conn = pool.get().unwrap();
+    let payload_closure = CollectionVideo {
+        collection_id: payload.collection_id.clone(),
+        video_id: payload.video_id.clone(),
+    };
+    match web::block(move || payload_closure.insert(&conn)).await {
+        Ok(_)
+        | Err(BlockingError::Error(Error::DatabaseError(DatabaseErrorKind::UniqueViolation, _))) => {
+            HttpResponse::Ok().finish()
+        }
+        Err(BlockingError::Error(Error::DatabaseError(
+            DatabaseErrorKind::ForeignKeyViolation,
+            _,
+        ))) => HttpResponse::NotFound().finish(),
+        _ => HttpResponse::InternalServerError().finish(),
+    }
+}
+
+pub async fn get_liked_videos(
+    pool: web::Data<DbPool>,
+    req: HttpRequest,
+    config: web::Data<Config>,
+) -> HttpResponse {
+    let user = req.head().extensions().get::<User>().unwrap().clone();
+    match web::block(move || Rating::find_liked_join_video_and_user(&pool.get().unwrap(), &user.id))
+        .await
+    {
+        Ok(rows) => HttpResponse::Ok().json(
+            rows.into_iter()
+                .map(|row| {
+                    let (_, mut v, u) = row;
+                    v.resolve(&config.media_base_url);
+                    VideoUserDto::from((v, u))
+                })
+                .collect::<Vec<VideoUserDto>>(),
+        ),
+        _ => HttpResponse::InternalServerError().finish(),
+    }
+}
+
+pub async fn delete_video(
+    pool: web::Data<DbPool>,
+    req: HttpRequest,
+    payload: web::Json<IdQuery>,
+    config: web::Data<Config>,
+) -> HttpResponse {
+    let user = req.head().extensions().get::<User>().unwrap().clone();
+    let conn = pool.get().unwrap();
+    let video = match web::block(move || Video::find_by_id(&conn, &payload.id)).await {
+        Ok(v) => v,
+        Err(BlockingError::Error(Error::NotFound)) => return HttpResponse::NotFound().finish(),
+        _ => return HttpResponse::InternalServerError().finish(),
+    };
+    if video.uploader != user.id {
+        return HttpResponse::Forbidden().finish();
+    }
+    let video_folder_dir = Path::new(&config.media_base_dir)
+        .join(&user.id)
+        .join(&video.id);
+    if web::block(|| std::fs::remove_dir_all(video_folder_dir))
+        .await
+        .is_err()
+    {
+        return HttpResponse::InternalServerError().finish();
+    }
+    let conn = pool.get().unwrap();
+    match web::block(move || video.delete(&conn)).await {
+        Ok(_) => HttpResponse::Ok().finish(),
+        _ => HttpResponse::InternalServerError().finish(),
+    }
+}
+
+pub async fn delete_collection(
+    pool: web::Data<DbPool>,
+    req: HttpRequest,
+    payload: web::Json<IdQuery>,
+) -> HttpResponse {
+    let user = req.head().extensions().get::<User>().unwrap().clone();
+    let conn = pool.get().unwrap();
+    let collection = match web::block(move || Collection::find_by_id(&conn, &payload.id)).await {
+        Ok(c) => c,
+        Err(BlockingError::Error(Error::NotFound)) => return HttpResponse::NotFound().finish(),
+        _ => return HttpResponse::InternalServerError().finish(),
+    };
+    if collection.user_id != user.id {
+        return HttpResponse::Forbidden().finish();
+    }
+    let conn = pool.get().unwrap();
+    match web::block(move || collection.delete(&conn)).await {
+        Ok(_) => HttpResponse::Ok().finish(),
+        _ => HttpResponse::InternalServerError().finish(),
+    }
+}
+
+pub async fn delete_comment(
+    pool: web::Data<DbPool>,
+    req: HttpRequest,
+    payload: web::Json<IdQuery>,
+) -> HttpResponse {
+    let user = req.head().extensions().get::<User>().unwrap().clone();
+    let conn = pool.get().unwrap();
+    let comment = match web::block(move || Comment::find_by_id(&conn, &payload.id)).await {
+        Ok(c) => c,
+        Err(BlockingError::Error(Error::NotFound)) => return HttpResponse::NotFound().finish(),
+        _ => return HttpResponse::InternalServerError().finish(),
+    };
+    if comment.user_id != user.id {
+        return HttpResponse::Forbidden().finish();
+    }
+    let conn = pool.get().unwrap();
+    match web::block(move || comment.delete(&conn)).await {
+        Ok(_) => HttpResponse::Ok().finish(),
+        _ => HttpResponse::InternalServerError().finish(),
     }
 }
