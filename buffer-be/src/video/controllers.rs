@@ -9,7 +9,7 @@ use validator::Validate;
 use super::{
     dtos::{
         CommentDto, HasRatedDto, NewCommentDto, NewVideoDto, RateVideoRequest, SearchVideoDto,
-        VideoDetailDto, VideoRatingDto,
+        VideoRatingDto,
     },
     models::{Comment, NewComment, NewVideo, Rating, Video},
 };
@@ -183,13 +183,20 @@ pub async fn video_detail(
     config: web::Data<Config>,
 ) -> HttpResponse {
     let conn = pool.get().unwrap();
-    match web::block(move || Video::find_by_id_join_user(&conn, &query.id)).await {
-        Ok(mut t) => {
-            t.0.resolve(&config.media_base_url);
-            HttpResponse::Ok().json(VideoDetailDto::from(t))
-        }
-        Err(BlockingError::Error(Error::NotFound)) => return HttpResponse::NotFound().finish(),
-        _ => return HttpResponse::InternalServerError().finish(),
+    let (mut video, user) =
+        match web::block(move || Video::find_by_id_join_user(&conn, &query.id)).await {
+            Ok(t) => t,
+            Err(BlockingError::Error(Error::NotFound)) => return HttpResponse::NotFound().finish(),
+            _ => return HttpResponse::InternalServerError().finish(),
+        };
+    video.resolve(&config.media_base_url);
+    let conn = pool.get().unwrap();
+    let closure_args = (video.id.clone(), video.view_count);
+    match web::block(move || Video::increment_view_count(&conn, &closure_args.0, closure_args.1))
+        .await
+    {
+        Ok(_) => HttpResponse::Ok().json(VideoUserDto::from((video, user))),
+        _ => HttpResponse::InternalServerError().finish(),
     }
 }
 
@@ -590,6 +597,25 @@ pub async fn delete_comment(
     let conn = pool.get().unwrap();
     match web::block(move || comment.delete(&conn)).await {
         Ok(_) => HttpResponse::Ok().finish(),
+        _ => HttpResponse::InternalServerError().finish(),
+    }
+}
+
+pub async fn list_trending_videos(
+    pool: web::Data<DbPool>,
+    config: web::Data<Config>,
+) -> HttpResponse {
+    let conn = pool.get().unwrap();
+    match web::block(move || Video::find_many_sort_by_view_join_user(&conn)).await {
+        Ok(rows) => HttpResponse::Ok().json(
+            rows.into_iter()
+                .map(|row| {
+                    let (mut v, u) = row;
+                    v.resolve(&config.media_base_url);
+                    VideoUserDto::from((v, u))
+                })
+                .collect::<Vec<VideoUserDto>>(),
+        ),
         _ => HttpResponse::InternalServerError().finish(),
     }
 }

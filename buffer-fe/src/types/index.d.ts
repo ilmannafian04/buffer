@@ -15,6 +15,7 @@ export type Video = {
   thumbnailPath: string;
   videoPath: string;
   createdAt: string;
+  viewCount: number;
 };
 
 export type User = {

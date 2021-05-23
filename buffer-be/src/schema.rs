@@ -68,6 +68,7 @@ table! {
         video_path -> Varchar,
         thumbnail_path -> Varchar,
         created_at -> Timestamp,
+        view_count -> Int4,
     }
 }
 

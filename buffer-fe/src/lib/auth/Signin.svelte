@@ -2,11 +2,11 @@
   import axios, { AxiosResponse } from 'axios';
   // noinspection TypeScriptCheckImport
   import { Field, Input } from 'svelma';
+  import { navigate } from 'svelte-routing';
 
   import { getAccount } from '../../api/userApi';
   import { userState } from '../../store/authStore';
-  import type { SignInResponse } from '../../types/dto';
-  import type { SignInFormData } from '../../types/form';
+  import type { SignInResponse, SignInFormData } from '../../types';
 
   let isSubmitting = false;
   let initialData: SignInFormData = {
@@ -30,6 +30,7 @@
           signedIn: true,
           user: value.data,
         });
+        navigate('/');
       })
       .catch((err) => console.error(err))
       .finally(() => (isSubmitting = false));

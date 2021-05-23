@@ -36,6 +36,8 @@ pub struct Video {
     pub thumbnail_path: String,
     #[serde(rename = "createdAt")]
     pub created_at: NaiveDateTime,
+    #[serde(rename = "viewCount")]
+    pub view_count: i32,
 }
 
 sql_function!(fn similarity(x: Text, y: Text) -> Float);
@@ -93,6 +95,24 @@ impl Video {
         use crate::schema::videos::dsl::id;
         diesel::delete(all_videos.filter(id.eq(self.id))).execute(conn)
     }
+
+    pub fn increment_view_count(conn: &PgConnection, v_id: &str, curr: i32) -> QueryResult<usize> {
+        use crate::schema::videos::{id, view_count};
+        diesel::update(all_videos.filter(id.eq(v_id)))
+            .set(view_count.eq(curr + 1))
+            .execute(conn)
+    }
+
+    pub fn find_many_sort_by_view_join_user(
+        conn: &PgConnection,
+    ) -> QueryResult<Vec<(Video, User)>> {
+        use crate::schema::videos::dsl::view_count;
+        all_videos
+            .inner_join(users::table)
+            .order_by(view_count.desc())
+            .limit(10)
+            .get_results(conn)
+    }
 }
 
 impl ResolveMediaUrl for Video {
@@ -114,6 +134,7 @@ pub struct NewVideo {
     pub description: String,
     pub video_path: String,
     pub thumbnail_path: String,
+    pub view_count: i32,
 }
 
 impl NewVideo {
@@ -163,6 +184,7 @@ impl Default for NewVideo {
             description: "".to_owned(),
             video_path: "".to_owned(),
             thumbnail_path: "".to_owned(),
+            view_count: 0,
         }
     }
 }
