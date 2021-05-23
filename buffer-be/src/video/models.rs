@@ -57,15 +57,10 @@ impl Video {
             .get_result(conn)
     }
 
-    pub fn find_many_sort_by_new(
-        conn: &PgConnection,
-        skip: i64,
-    ) -> QueryResult<Vec<(Video, User)>> {
+    pub fn find_many_sort_by_new(conn: &PgConnection) -> QueryResult<Vec<(Video, User)>> {
         use crate::schema::videos::dsl::created_at;
         all_videos
             .inner_join(users::table)
-            .limit(10)
-            .offset(skip)
             .order_by(created_at.desc())
             .get_results(conn)
     }

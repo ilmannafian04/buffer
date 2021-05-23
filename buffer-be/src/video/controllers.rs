@@ -9,7 +9,7 @@ use validator::Validate;
 use super::{
     dtos::{
         CommentDto, HasRatedDto, NewCommentDto, NewVideoDto, RateVideoRequest, SearchVideoDto,
-        VideoDetailDto, VideoListDto, VideoRatingDto,
+        VideoDetailDto, VideoRatingDto,
     },
     models::{Comment, NewComment, NewVideo, Rating, Video},
 };
@@ -162,16 +162,9 @@ pub async fn new_comment(
     }
 }
 
-pub async fn list_videos(
-    pool: web::Data<DbPool>,
-    query: web::Query<VideoListDto>,
-    config: web::Data<Config>,
-) -> HttpResponse {
-    if query.validate().is_err() {
-        return HttpResponse::BadRequest().finish();
-    }
+pub async fn list_videos(pool: web::Data<DbPool>, config: web::Data<Config>) -> HttpResponse {
     let conn = pool.get().unwrap();
-    match web::block(move || Video::find_many_sort_by_new(&conn, query.skip)).await {
+    match web::block(move || Video::find_many_sort_by_new(&conn)).await {
         Ok(v) => HttpResponse::Ok().json(
             v.into_iter()
                 .map(|mut t| {

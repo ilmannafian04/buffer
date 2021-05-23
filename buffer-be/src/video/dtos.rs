@@ -1,7 +1,5 @@
 use chrono::NaiveDateTime;
-use serde::{Deserialize, Deserializer, Serialize};
-use serde_with::skip_serializing_none;
-use validator::Validate;
+use serde::{Deserialize, Serialize};
 
 use crate::user::models::User;
 
@@ -21,35 +19,6 @@ pub struct NewCommentDto {
     pub content: String,
     #[serde(rename = "isAnonymous")]
     pub is_anonymous: bool,
-}
-
-#[non_exhaustive]
-pub enum VideoListType {
-    New,
-    Unknown,
-}
-
-impl<'de> Deserialize<'de> for VideoListType {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        Ok(match s.as_str() {
-            "new" => VideoListType::New,
-            _ => VideoListType::Unknown,
-        })
-    }
-}
-
-#[skip_serializing_none]
-#[derive(Deserialize, Validate)]
-pub struct VideoListDto {
-    #[serde(default)]
-    #[validate(range(min = 0))]
-    pub skip: i64,
-    #[serde(rename = "listType")]
-    pub list_type: Option<VideoListType>,
 }
 
 #[derive(Serialize)]
