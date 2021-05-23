@@ -3,7 +3,7 @@
   import { onMount } from 'svelte';
   import { navigate } from 'svelte-routing';
 
-  import ListVideoUserWrapper from '../components/ListVideoUserWrapper.svelte';
+  import VideoCard from '../components/VideoCard.svelte';
   import { getLikedVideos } from '../../api/videoApi';
   import { userState } from '../../store/authStore';
   import type { VideoUser } from '../../types';
@@ -21,9 +21,10 @@
   });
 </script>
 
+<div class="is-size-2">Liked by me</div>
 <div class="list-container">
   {#each videos as video (video.video.id)}
-    <div class="m-2"><ListVideoUserWrapper videoUser={video} /></div>
+    <div class="m-2"><VideoCard videoUser={video} /></div>
   {/each}
 </div>
 
