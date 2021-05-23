@@ -5,7 +5,7 @@
   import { onMount } from 'svelte';
   import { Link, navigate } from 'svelte-routing';
 
-  import { getCommentsInVideo, newComment } from '../../api/videoApi';
+  import { deleteComment, getCommentsInVideo, newComment } from '../../api/videoApi';
   import { userState } from '../../store/authStore';
   import type { CommentDTO, NewCommentData } from '../../types';
   import { parseDate } from '../../util/stringUtil';
@@ -29,6 +29,11 @@
     } else {
       navigate('/signin');
     }
+  };
+  const deleteHandler = (id: string) => {
+    deleteComment(id)
+      .then(() => (comments = comments.filter((comment) => comment.id !== id)))
+      .catch((err) => console.error(err));
   };
   $: commentData = { ...commentData, videoId: videoId ? videoId : '' };
   const loadMoreComments = (skip: number) => {
@@ -66,13 +71,21 @@
       <div class="comment py-2">
         <Icon pack="fas" icon="user-circle" size="is-medium" />
         <div>
-          <div>
-            {#if comment.isAnonymous}
-              Anonymous
-            {:else}
-              <Link to="/c/{comment.username}">{comment.userDisplayName}</Link>
+          <div class="comment">
+            <div>
+              {#if comment.isAnonymous}
+                Anonymous
+              {:else}
+                <Link to="/c/{comment.username}">{comment.userDisplayName}</Link>
+              {/if}
+              on {parseDate(comment.createdAt)}
+            </div>
+            {#if $userState.user?.username === comment.username}
+              <span class="icon is-medium icon-button" on:click={() => deleteHandler(comment.id)}>
+                <!-- prettier-ignore -->
+                <i class="fa fa-trash" aria-hidden="true"></i>
+              </span>
             {/if}
-            on {parseDate(comment.createdAt)}
           </div>
           <span>{comment.content}</span>
         </div>
@@ -88,5 +101,8 @@
   .comment {
     display: flex;
     flex-direction: row;
+  }
+  .icon-button {
+    cursor: pointer;
   }
 </style>

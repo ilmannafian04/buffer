@@ -245,3 +245,20 @@ impl From<(Video, User)> for VideoUserDTO {
         }
     }
 }
+
+#[derive(Serialize)]
+pub struct CollectionVideoUserDTO {
+    pub collection: Collection,
+    #[serde(rename = "videoUsers")]
+    pub video_users: Vec<VideoUserDTO>,
+}
+
+impl From<(Collection, Vec<(Video, User)>)> for CollectionVideoUserDTO {
+    fn from(tuple: (Collection, Vec<(Video, User)>)) -> Self {
+        let (c, vs) = tuple;
+        Self {
+            collection: c,
+            video_users: vs.into_iter().map(VideoUserDTO::from).collect(),
+        }
+    }
+}

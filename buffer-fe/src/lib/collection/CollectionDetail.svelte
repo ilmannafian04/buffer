@@ -3,24 +3,23 @@
   // noinspection TypeScriptCheckImport
   import InfiniteScroll from 'svelte-infinite-scroll';
 
-  import ListVideo from '../components/ListVideo.svelte';
-  import { getCollectionDetail } from '../../api/collectionApi';
-  import type { CollectionDetailDTO } from '../../types';
   import VideoRow from '../components/VideoRow.svelte';
+  import { getCollectionDetail } from '../../api/collectionApi';
+  import type { CollectionAndVideoUsers } from '../../types';
 
   export let collectionId;
-  let collectionDetail: CollectionDetailDTO = { description: '', name: '', videos: [] };
+  let collectionDetail: CollectionAndVideoUsers;
   let loadIsFinished = false;
   const loadMore = () => {
     if (!loadIsFinished) {
-      getCollectionDetail(collectionId, collectionDetail.videos.length)
-        .then((value: AxiosResponse<CollectionDetailDTO>) => {
-          if (value.data.videos.length < 5) {
+      getCollectionDetail(collectionId, collectionDetail?.videoUsers.length || 0)
+        .then((value: AxiosResponse<CollectionAndVideoUsers>) => {
+          if (value.data.videoUsers.length < 5) {
             loadIsFinished = true;
           }
           collectionDetail = {
             ...value.data,
-            videos: [...collectionDetail.videos, ...value.data.videos],
+            videoUsers: [...(collectionDetail?.videoUsers || []), ...value.data.videoUsers],
           };
         })
         .catch((err) => console.error(err));
@@ -29,11 +28,13 @@
   $: if (collectionId) loadMore();
 </script>
 
-<div class="is-size-2">{collectionDetail.name}</div>
-<span>{collectionDetail.description}</span>
-<div>
-  {#each collectionDetail.videos as video (video.id)}
-    <div class="m-2"><VideoRow {video} /></div>
-  {/each}
-  <InfiniteScroll window={true} hasMore={!loadIsFinished} on:loadMore={() => loadMore()} />
-</div>
+{#if collectionDetail}
+  <div class="is-size-2">{collectionDetail.collection.name}</div>
+  <span>{collectionDetail.collection.description}</span>
+  <div>
+    {#each collectionDetail.videoUsers as videoUser (videoUser.id)}
+      <div class="m-2"><VideoRow {videoUser} /></div>
+    {/each}
+    <InfiniteScroll window={true} hasMore={!loadIsFinished} on:loadMore={() => loadMore()} />
+  </div>
+{/if}

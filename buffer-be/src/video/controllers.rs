@@ -13,6 +13,7 @@ use super::{
     },
     models::{Comment, NewComment, NewVideo, Rating, Video},
 };
+use crate::video::dtos::CollectionVideoUserDTO;
 use crate::{
     common::{
         dtos::{IdQuery, IndexRequestDto},
@@ -414,7 +415,7 @@ pub async fn collection_info(
     })
     .await
     {
-        Ok(t) => HttpResponse::Ok().json(CollectionDetailDto::from((
+        Ok(t) => HttpResponse::Ok().json(CollectionVideoUserDTO::from((
             collection,
             t.into_iter()
                 .map(|mut tuple| {

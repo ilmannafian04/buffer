@@ -60,3 +60,7 @@ export const getLikedVideos = () => {
 export const deleteVideo = (id: string) => {
   return axios.post('/api/a/video/delete', { id }, jsonAuthedConfig());
 };
+
+export const deleteComment = (id: string) => {
+  return axios.post('/api/a/video/comment/delete', { id }, jsonAuthedConfig());
+};

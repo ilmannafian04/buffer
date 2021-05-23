@@ -28,3 +28,8 @@ export type VideoUser = {
   video: Video;
   user: User;
 };
+
+export type CollectionAndVideoUsers = {
+  collection: Collection;
+  videoUsers: VideoUser[];
+};
