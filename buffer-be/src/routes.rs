@@ -15,6 +15,7 @@ pub fn configuration(cfg: &mut web::ServiceConfig) {
             .route("/hasrated", web::get().to(v::has_rated))
             .route("/liked", web::get().to(v::get_liked_videos))
             .route("/delete", web::post().to(v::delete_video))
+            .route("/comment/delete", web::post().to(v::delete_comment))
             .wrap(HttpAuthentication::bearer(auth_validator)),
     )
     .service(

@@ -189,6 +189,10 @@ pub struct Comment {
 }
 
 impl Comment {
+    pub fn find_by_id(conn: &PgConnection, c_id: &str) -> QueryResult<Comment> {
+        use crate::schema::comments::dsl::id;
+        all_comments.filter(id.eq(c_id)).get_result(conn)
+    }
     pub fn find_many_by_video_join_user(
         conn: &PgConnection,
         v_id: &str,
