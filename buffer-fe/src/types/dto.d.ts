@@ -9,27 +9,6 @@ export type CreatorProfileResponse = {
   followerCount: number;
 };
 
-export type ListVideoDTO = {
-  id: string;
-  title: string;
-  thumbnailPath: string;
-  createdAt: string;
-  uploader: string;
-  uploaderId: string;
-};
-
-export type VideoDetailDTO = {
-  id: string;
-  title: string;
-  description: string;
-  path: string;
-  thumbnailPath: string;
-  createdAt: string;
-  uploader: string;
-  uploaderUsername: string;
-  uploaderId: string;
-};
-
 export type CommentDTO = {
   id: string;
   content: string;
